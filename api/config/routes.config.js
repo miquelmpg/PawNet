@@ -5,6 +5,7 @@ import * as users from "../controllers/users.controller.js";
 import * as posts from "../controllers/posts.controller.js";
 import * as comments from "../controllers/comments.controller.js";
 import * as likes from "../controllers/likes.controller.js";
+import * as follows from "../controllers/follows.controller.js";
 
 import upload from "../config/multer.config.js";
 
@@ -27,6 +28,10 @@ router.delete("/posts/:id/comments/:commentId", comments.deleteComment);
 router.get('/likes/count-likes', likes.count);
 router.get('/likes/is-liked', likes.getLike);
 router.post('/likes/toggle', likes.toggle);
+
+router.get('/followers', follows.getFollowers);
+router.get('/following', follows.getFollowings);
+router.post('/follow/:id/toggle', follows.toggle);
 
 router.use((req, res) => {
     throw new createHttpError(404, "Route Not Found");
