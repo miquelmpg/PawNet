@@ -6,7 +6,7 @@ import createHttpError from "http-errors";
 export async function create(req, res) {
     const user = await User.create(req.body);
 
-    res.json(user);
+    res.status(201).json(user);
 }
 
 export async function login(req, res) {
@@ -70,4 +70,22 @@ export async function update(req, res) {
 
     await req.session.user.save();
     res.json(req.session.user);
+}
+
+export async function nameList(req, res) {
+    const criteria = {};
+
+    if (req.query.userName) {
+        criteria.userName = {
+            $regex: req.query.userName,
+            $options: "i",
+            $ne: req.session.user.userName
+        };
+    } else {
+        criteria.userName = { $ne: req.session.user.userName };
+    }
+
+    const userNames = await User.find(criteria);
+
+    res.json(userNames);
 }

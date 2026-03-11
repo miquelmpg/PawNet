@@ -1,13 +1,19 @@
 import Pet from "../models/pet.model.js";
+import createHttpError from "http-errors";
 
 export async function create(req, res) {
+    req.body.owner = req.session.user.id;
     const pet = await Pet.create(req.body);
 
-    res.json(pet);
+    res.status(201).json(pet);
 }
 
-export async function destroy(req, res) {
+export async function remove(req, res) {
     const pet = await Pet.findById(req.params.id);
+
+    if(!pet) {
+        throw createHttpError(404, 'Pet not found');
+    }
 
     if (pet.owner.toString() !== req.session.user.id.toString()) {
         throw createHttpError(403, "It is not your pet!");
@@ -19,14 +25,22 @@ export async function destroy(req, res) {
 }
 
 export async function update(req, res) {
-    delete req.body.email;
+    const pet = await Pet.findById(req.params.id);
 
-    Object.assign(req.session.user, req.body);
-
-    if (req.file) {
-        req.session.user.avatarUrl = req.file.path;
+    if(!pet) {
+        throw createHttpError(404, 'Pet not found');
     }
 
-    await req.session.user.save();
-    res.json(req.session.user);
+    if (pet.owner.toString() !== req.session.user.id.toString()) {
+        throw createHttpError(403, "It is not your pet!");
+    }
+
+    Object.assign(pet, req.body);
+
+    if (req.file) {
+        pet.profilePicture = req.file.path;
+    }
+
+    await pet.save();
+    res.json(pet);
 }

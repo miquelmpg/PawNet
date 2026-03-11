@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "node --env-file .env --watch app.js",
     "start": "node --env-file .env app.js",
-    "seed": "node --env-file .env bin/seeds.js"
+    "seed": "node --env-file .env bin/seeds.js",
+    "test": "cross-env NODE_ENV=test vitest run",
+    "test:coverage": "cross-env NODE_ENV=test vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +25,10 @@
     "multer-storage-cloudinary": "^4.0.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^10.3.0"
+    "@faker-js/faker": "^10.3.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "cross-env": "^10.1.0",
+    "supertest": "^7.2.2",
+    "vitest": "^4.0.18"
   }
 }

@@ -7,7 +7,7 @@ export async function createPost(req, res) {
     user: req.session.user.id,
     });
 
-    res.json(post);
+    res.status(201).json(post);
 }
 
 export async function list(req, res) {

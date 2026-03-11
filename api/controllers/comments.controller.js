@@ -8,7 +8,7 @@ export async function createComment(req, res) {
         post: req.params.id,
     });
 
-    res.json(comment);
+    res.status(201).json(comment);
 }
 
 export async function deleteComment(req, res) {
