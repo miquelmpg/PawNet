@@ -6,13 +6,12 @@ import User from "../models/user.model.js";
 import Session from "../models/session.model.js";
 
 describe('Pet API - complete CRUD', () => {
-
     let cookies;
     let id;
 
     beforeAll(async () => {
         const user = await User.create({
-        email: "auth@books.com",
+        email: "auth@tests.com",
         password: "password123",
         userName: 'JohnDoe',
         });
@@ -215,7 +214,7 @@ describe('Pet API - complete CRUD', () => {
     // INTEGRATION - Complete CRUD Flow
     // ============================================
     describe('Complete CRUD Flow', () => {
-        it('should create, update, and delete a pet', async () => {
+        it('should create, update and delete a pet', async () => {
             const createRes = await request(app)
             .post('/api/pets')
             .set('Cookie', cookies)

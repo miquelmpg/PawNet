@@ -17,8 +17,9 @@ router.post("/sessions", users.login);
 router.delete("/sessions", users.logout);
 
 router.get('/users/search', users.nameList);
-router.patch("/users/me", upload.single("avatar"), users.update);
 router.get("/users/:id", users.detail);
+router.patch("/users/:id", upload.single("avatar"), users.update);
+router.delete("/users/:id", users.remove);
 
 router.post('/pets', pets.create);
 router.delete('/pets/:id', pets.remove);

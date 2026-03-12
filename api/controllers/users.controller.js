@@ -62,6 +62,16 @@ export async function detail(req, res) {
 export async function update(req, res) {
     delete req.body.email;
 
+    const user = await User.findById(req.params.id);
+
+    if(!user) {
+        throw createHttpError(404, 'User not found');
+    }
+
+    if (user.id.toString() !== req.session.user.id.toString()) {
+        throw createHttpError(403, "You are not allowed to update this account!");
+    }
+
     Object.assign(req.session.user, req.body);
 
     if (req.file) {
@@ -81,11 +91,42 @@ export async function nameList(req, res) {
             $options: "i",
             $ne: req.session.user.userName
         };
-    } else {
-        criteria.userName = { $ne: req.session.user.userName };
     }
 
     const userNames = await User.find(criteria);
 
     res.json(userNames);
 }
+
+export async function remove(req, res) {
+    const user = await User.findById(req.params.id);
+
+    if(!user) {
+        throw createHttpError(404, 'User not found');
+    }
+
+    if (user.id.toString() !== req.session.user.id.toString()) {
+        throw createHttpError(403, "You are not allowed to delete this account!");
+    }
+
+    await User.findByIdAndDelete(user.id);
+
+    res.status(204).end();
+}
+
+// export async function update(req, res) {
+//     delete req.body.email;
+
+//     if (req.params.id === req.session.user.id) {
+//         Object.assign(req.session.user, req.body);
+
+//     if (req.file) {
+//         req.session.user.avatarUrl = req.file.path;
+//     }
+
+//     await req.session.user.save();
+//     res.json(req.session.user);
+//     } else {
+//         throw createHttpError(403, "Not your profile to update");
+//     }
+// }
