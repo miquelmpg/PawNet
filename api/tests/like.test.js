@@ -351,4 +351,121 @@ describe('Like API - complete CRUD', () => {
             expect(response.body.message).toBe('Invalid post or comment id');
         });
     });
+
+    // ============================================
+    // INTEGRATION - Complete CRUD Flow
+    // ============================================
+    describe('Complete CRUD Flow', () => {
+        it("should create, delete, and get a user’s like", async () => {
+            await Like.deleteMany();
+
+            const user1 = await User.create({
+                email: 'user1@example.com',
+                password: 'password123',
+                userName: 'userOne',
+            });
+
+            const session1 = await Session.create({ user: user1._id });
+            const cookies1 = [`sessionId=${session1._id.toString()}`];
+
+            const user2 = await User.create({
+                email: 'user2@example.com',
+                password: 'password123',
+                userName: 'userOne',
+            });
+
+            const session2 = await Session.create({ user: user2._id });
+            const cookies2 = [`sessionId=${session2._id.toString()}`];
+
+            const user3 = await User.create({
+                email: 'user3@example.com',
+                password: 'password123',
+                userName: 'userOne',
+            });
+
+            const session3 = await Session.create({ user: user3._id });
+            const cookies3 = [`sessionId=${session3._id.toString()}`];
+
+            const user4 = await User.create({
+                email: 'user4@example.com',
+                password: 'password123',
+                userName: 'userOne',
+            });
+
+            const session4 = await Session.create({ user: user4._id });
+            const cookies4 = [`sessionId=${session4._id.toString()}`];
+
+            const user5 = await User.create({
+                email: 'user5@example.com',
+                password: 'password123',
+                userName: 'userOne',
+            });
+
+            const session5 = await Session.create({ user: user5._id });
+            const cookies5 = [`sessionId=${session5._id.toString()}`];
+
+            await request(app)
+                .post(`/api/likes/${newPost.id}/toggle`)
+                .set('Cookie', cookies1)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/likes/${newPost.id}/toggle`)
+                .set('Cookie', cookies2)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/likes/${newPost.id}/toggle`)
+                .set('Cookie', cookies3)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/likes/${newComment.id}/toggle`)
+                .set('Cookie', cookies4)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/likes/${newComment.id}/toggle`)
+                .set('Cookie', cookies5)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/likes/${newComment.id}/toggle`)
+                .set('Cookie', cookies5)
+                .expect(204);
+
+            await request(app)
+                .post(`/api/likes/${newComment.id}/toggle`)
+                .set('Cookie', cookies5)
+                .expect(201);
+
+            const response = await request(app)
+                .get(`/api/likes/${newPost.id}/count-likes`)
+                .set('Cookie', cookies)
+                .expect(200);
+
+            expect(response.body).toEqual(3);
+
+            const response2 = await request(app)
+                .get(`/api/likes/${newComment.id}/count-likes`)
+                .set('Cookie', cookies)
+                .expect(200);
+
+            expect(response2.body).toEqual(2);
+
+            const response3 = await request(app)
+                .get(`/api/likes/${newComment.id}/is-liked`)
+                .set('Cookie', cookies5)
+                .expect(200);
+
+            expect(response3.body.liked).toBe(true);
+
+            const response4 = await request(app)
+                .get(`/api/likes/${newComment.id}/is-liked`)
+                .set('Cookie', cookies)
+                .expect(200);
+
+            expect(response4.body.liked).toBe(false);
+        });
+    });
 });
