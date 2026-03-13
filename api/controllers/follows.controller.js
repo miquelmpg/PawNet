@@ -1,6 +1,10 @@
 import Follow from '../models/follow.model.js';
+import createHttpError from "http-errors";
 
 export async function toggle(req, res) {
+    if (req.params.id === req.session.user.id) {
+        throw createHttpError(400, 'you can not follow yourself')
+    }
     const follow = await Follow.findOne({ 
         follower: req.session.user.id,
         following: req.params.id,
