@@ -26,7 +26,7 @@ router.delete('/pets/:id', pets.remove);
 router.patch('/pets/:id', upload.single("avatar"), pets.update);
 
 router.post("/posts", posts.createPost);
-router.get("/posts", posts.list);
+router.get("/posts/search", posts.list);
 router.delete("/posts/:id", posts.deletePost);
 
 router.post("/posts/:id/comments", comments.createComment);

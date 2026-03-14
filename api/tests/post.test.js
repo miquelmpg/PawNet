@@ -1,24 +1,21 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
-import User from '../models/user.model.js';
-import Session from '../models/session.model.js';
 import Post from '../models/post.model.js';
+import { createUserSession, createPost } from '../utils';
 
 describe('Post API - complete CRUD', () => {
+    let user, otherUser;
     let cookies;
-    let id;
+    let newPost;
 
     beforeAll(async () => {
-        const user = await User.create({
-            email: "auth@tests.com",
-            password: "password123",
-            userName: 'JohnDoe',
-        });
-        
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
-        id = user.id;
+        user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
+        cookies = user.cookies;
+
+        otherUser = await createUserSession("other@tests.com", 'password123', 'OtherUser');
+
+        newPost = await createPost('New post incoming', user.id);
     });
 
     // ============================================
@@ -28,7 +25,7 @@ describe('Post API - complete CRUD', () => {
         it('should correctly create a new post', async () => {
             const newPost = {
                 content: 'This is a new post',
-                user: id,
+                user: user.id,
             };
 
             const response = await request(app)
@@ -38,8 +35,8 @@ describe('Post API - complete CRUD', () => {
                 .expect(201);
             
             expect(response.body.content).toBe('This is a new post');
-            expect(response.body.user).toBe(id);
-            expect(response.body.id).toBeDefined(id);
+            expect(response.body.user).toBe(user.id);
+            expect(response.body.id).toBeDefined(user.id);
 
             const postInDB = await Post.findById(response.body.id);
             expect(postInDB).not.toBeNull();
@@ -48,7 +45,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return 400 if post content is missing', async () => {
             const badPost = {
-                user: id,
+                user: user.id,
             };
 
             const response = await request(app)
@@ -62,14 +59,14 @@ describe('Post API - complete CRUD', () => {
     });
 
     // ============================================
-    // GET ALL - GET /api/posts
+    // GET ALL - GET /api/posts/search
     // ============================================
     describe('GET /api/posts', () => {
         it('should return an empty array if there are no posts', async () => {
             await Post.deleteMany();
 
             const response = await request(app)
-                .get('/api/posts')
+                .get('/api/posts/search')
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -77,34 +74,43 @@ describe('Post API - complete CRUD', () => {
         });
 
         it('should return all existing posts', async () => {
+
+            Promise.all([
             await Post.create({
                 content: 'user1@example.com',
-                user: id,
-            });
-
+                user: user.id,
+            }),
             await Post.create({
                 content: 'user2@example.com',
-                user: id,
-            });
-
+                user: user.id,
+            }),
             await Post.create({
                 content: 'user3@example.com',
-                user: id,
-            });   
-
+                user: user.id,
+            }),
             await Post.create({
                 content: 'user4@example.com',
-                user: id,
-            });          
+                user: user.id,
+            })]);      
 
             const response = await request(app)
-                .get('/api/posts')
+                .get('/api/posts/search')
                 .set('Cookie', cookies)
                 .expect(200);
 
             expect(response.body).toHaveLength(4);
             expect(response.body[0].content).toBe("user4@example.com");
             expect(response.body[3].content).toBe("user1@example.com");
+        });
+
+        it('should return filer post by content that contains "user4"', async () => {
+            const response = await request(app)
+                .get('/api/posts/search')
+                .query({ content: 'user4' })
+                .set('Cookie', cookies)
+                .expect(200);
+
+            expect(response.body[0].content).toBe("user4@example.com");
         });
     });
 
@@ -115,11 +121,11 @@ describe('Post API - complete CRUD', () => {
         it("should include the post's comments (populate)", async () => {           
             const post = await Post.create({
                 content: 'user1@example.com',
-                user: id,
+                user: user.id,
             });
 
             const response = await request(app)
-                .get(`/api/posts`)
+                .get(`/api/posts/search`)
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -133,15 +139,6 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe("DELETE /api/posts/:id", () => {
         it("should delete your own post", async () => {
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
-
             const post = await Post.create({
                 content: 'This is my post',
                 user: user.id,
@@ -157,25 +154,10 @@ describe('Post API - complete CRUD', () => {
         });
 
         it('should return 403 if you try to delete a post you do not own', async () => {
-            const otherUser = await User.create({
-                email: 'other@tests.com',
-                password: 'password123',
-                userName: 'OtherUser',
-            });
-
             const otherPost = await Post.create({
                 content: 'This is an other post',
                 user: otherUser.id,
             })
-
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
 
             const response = await request(app)
                 .delete(`/api/posts/${otherPost.id}`)
@@ -187,14 +169,6 @@ describe('Post API - complete CRUD', () => {
 
         it('should return 404 if the post to delete does not exist', async () => {
             const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
 
             const post = await Post.create({
                 content: 'This is my post',
@@ -217,7 +191,7 @@ describe('Post API - complete CRUD', () => {
         it('should create, get and delete a post', async () => {
             const newPost = {
                 content: 'This is a complete CRUD flow post',
-                user: id,
+                user: user.id,
             }
 
             const createRes = await request(app)
@@ -230,7 +204,7 @@ describe('Post API - complete CRUD', () => {
             expect(postId).toBeDefined();
 
             const readRes = await request(app)
-                .get(`/api/posts`)
+                .get(`/api/posts/search`)
                 .set("Cookie", cookies)
                 .expect(200);
     

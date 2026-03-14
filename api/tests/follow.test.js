@@ -1,123 +1,82 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
-import User from '../models/user.model.js';
-import Session from '../models/session.model.js';
 import Follow from '../models/follow.model.js';
+import { createUserSession } from '../utils/user-test-utils.js';
 
 describe('Follow API - complete CRUD', () => {
-    let cookies;
-    let id;
+    let user, user1, user2, user3, user4;
+    let cookies, cookies1, cookies2, cookies3, cookies4;
 
     beforeAll(async () => {
-        const user = await User.create({
-            email: "auth@tests.com",
-            password: "password123",
-            userName: 'JohnDoe',
-        });
+        user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
+        cookies = user.cookies;
 
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
-        id = user.id;
+        user1 = await createUserSession("user1@example.com", 'password123', 'userOne');
+        cookies1 = user1.cookies;
+
+        user2 = await createUserSession("user2@example.com", 'password123', 'userTwo');
+        cookies2 = user2.cookies;
+
+        user3 = await createUserSession("user3@example.com", 'password123', 'userThree');
+        cookies3 = user3.cookies;
+
+        user4 = await createUserSession("user4@example.com", 'password123', 'userFour');
+        cookies4 = user4.cookies;
     });
 
     // ============================================
     // CREATE - POST /api/follows/:id/toggle
     // ============================================
-    describe('POST /api/likes/:targetId/toggle', () => {
+    describe('POST /api/follows/:targetId/toggle', () => {
         it('should correctly follow a user', async () => {
             await Follow.deleteMany();
 
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
             const response = await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
                 .expect(201);
             
             expect(response.body.follower).toBe(user1.id);
-            expect(response.body.following).toBe(id);
+            expect(response.body.following).toBe(user.id);
             expect(response.body.id).toBeDefined();
 
             const followInDB = await Follow.findById(response.body.id);
             expect(followInDB).not.toBeNull();
-            expect(followInDB.following.toString()).toBe(id);
+            expect(followInDB.following.toString()).toBe(user.id);
             expect(followInDB.follower.toString()).toBe(user1.id);
         });
 
         it('should correctly unfollow a user', async () => {
             await Follow.deleteMany();
 
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
-
-            const user3 = await User.create({
-                email: 'user3@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session3 = await Session.create({ user: user3._id });
-            const cookies3 = [`sessionId=${session3._id.toString()}`];
-
-            const user4 = await User.create({
-                email: 'user4@example.com',
-                password: 'password123',
-                userName: 'userFour',
-            });
-
-            const session4 = await Session.create({ user: user4._id });
-            const cookies4 = [`sessionId=${session4._id.toString()}`];
-
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
                 .expect(201);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)
                 .expect(201);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)
                 .expect(204);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies3)
                 .expect(201);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies4)
                 .expect(201);
 
             const response = await request(app)
-                .get(`/api/follows/${id}/followers`)
+                .get(`/api/follows/${user.id}/followers`)
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -126,11 +85,23 @@ describe('Follow API - complete CRUD', () => {
 
         it('should not follow or unfollow yourself', async () => {
             const response = await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies)
                 .expect(400);
 
             expect(response.body.message).toBe('you can not follow yourself');
+        });
+        
+                
+        it('should return 400 if user id does not exist', async () => {
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .post(`/api/follows/${fakeId}/toggle`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
 
@@ -140,11 +111,22 @@ describe('Follow API - complete CRUD', () => {
     describe('GET /api/follows/:id/followers', () => {
         it('should return the number of followers', async () => {                
             const response = await request(app)
-                .get(`/api/follows/${id}/followers`)
+                .get(`/api/follows/${user.id}/followers`)
                 .set("Cookie", cookies)
                 .expect(200);
             
             expect(response.body).toEqual(3);
+        });
+
+        it('should return 400 if user id does not exist', async () => {
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .get(`/api/follows/${fakeId}/followers`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
     
@@ -153,26 +135,10 @@ describe('Follow API - complete CRUD', () => {
     // ============================================
     describe('POST /api/likes/:targetId/toggle', () => {
         it('should return the number of following users', async () => {
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
+            await Follow.deleteMany();
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
                 .expect(201);
 
@@ -188,6 +154,17 @@ describe('Follow API - complete CRUD', () => {
             
             expect(response.body).toEqual(2);
         });
+        
+        it('should return 400 if user id does not exist', async () => {
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .get(`/api/follows/${fakeId}/following`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
+        });
     });
 
     // // ============================================
@@ -196,12 +173,23 @@ describe('Follow API - complete CRUD', () => {
     describe('POST /api/follows/:id/followers-list', () => {
         it('should return the followers list (populate)', async () => {
             const response = await request(app)
-                .get(`/api/follows/${id}/followers-list`)
+                .get(`/api/follows/${user.id}/followers-list`)
                 .set("Cookie", cookies)
                 .expect(200);
 
             expect(Array.isArray(response.body)).toBe(true);
             expect(response.body.length).toBeGreaterThanOrEqual(0)
+        });
+
+        it('should return 400 if user id does not exist', async () => {
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .get(`/api/follows/${fakeId}/followers-list`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
 
@@ -212,41 +200,23 @@ describe('Follow API - complete CRUD', () => {
         it('should create, delete and get followers or following', async () => {
             await Follow.deleteMany();
 
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
-
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)
                 .expect(201);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)
                 .expect(204);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)
                 .expect(201);
 
             await request(app)
-                .post(`/api/follows/${id}/toggle`)
+                .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
                 .expect(201);
 
@@ -261,21 +231,21 @@ describe('Follow API - complete CRUD', () => {
                 .expect(201);
 
             const response = await request(app)
-                .get(`/api/follows/${id}/followers`)
+                .get(`/api/follows/${user.id}/followers`)
                 .set('Cookie', cookies)
                 .expect(200);
 
             expect(response.body).toEqual(2);
 
             const response2 = await request(app)
-                .get(`/api/follows/${id}/following`)
+                .get(`/api/follows/${user.id}/following`)
                 .set('Cookie', cookies)
                 .expect(200);
 
             expect(response2.body).toEqual(2);
 
             const response3 = await request(app)
-                .get(`/api/follows/${id}/followers-list`)
+                .get(`/api/follows/${user.id}/followers-list`)
                 .set("Cookie", cookies)
                 .expect(200);
 

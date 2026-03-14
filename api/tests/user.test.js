@@ -3,25 +3,21 @@ import request from 'supertest';
 import app from '../app.js';
 import User from '../models/user.model.js';
 import Session from '../models/session.model.js';
+import { createUserSession, authRequest } from '../utils';
 
-describe('Users API - complete CRUD', () => {
+describe('Users API', () => {
+    let user;
     let cookies;
 
     beforeAll(async () => {
-        const user = await User.create({
-        email: 'auth@tests.com',
-        password: 'password123',
-        userName: 'JohnDoe',
-        });
-        
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
+        user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
+        cookies = user.cookies;
     });
 
     // ============================================
     // CREATE - POST /api/users
     // ============================================
-    describe('POST /api/pets', () => {
+    describe('POST /api/users', () => {
         it('should correctly create a new user', async () => {
             const newUser = {
                 email: 'john@example.com',
@@ -147,26 +143,32 @@ describe('Users API - complete CRUD', () => {
             expect(response.body.userName.message).toBe("Path `userName` is required.");
         });
 
-        it('should return 400 if email is already registered', async () => {
-            // const badUser = {
-            //     email: 'john@example.com',
-            //     password: 'password123', 
-            //     userName: 'JohnDoe',
-            // }
+        it('should return 409 if email is already registered', async () => {
+            await User.deleteMany();
 
-            // const response = await request(app)
-            //     .post('/api/users')
-            //     .send(badUser)
-            //     .expect(201);
-            
-            // expect(response.body.email).toBe("john@example.com");
+            await User.collection.createIndex({ email: 1 }, { unique: true });
 
-            // const responseTwo = await request(app)
-            //     .post('/api/users')
-            //     .send(badUser)
-            //     .expect(409);
+            const badUser = {
+                email: 'john@example.com',
+                password: 'password123', 
+                userName: 'JohnDoe',
+            }
+
+            const response = await request(app)
+                .post('/api/users')
+                .send(badUser)
+                .expect(201);
             
-            // expect(responseTwo.body.message).toBe("Resource already exist");
+            expect(response.body.email).toBe("john@example.com");
+
+            const responseTwo = await request(app)
+                .post('/api/users')
+                .send(badUser)
+                .expect(409);
+            
+            expect(responseTwo.body.message).toBe("Resource already exist");
+
+            await User.collection.dropIndex({ email: 1 }, { unique: true });
         });
     });
 
@@ -394,15 +396,6 @@ describe('Users API - complete CRUD', () => {
                 userName: 'OtherUser',
             });
 
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
-
             const updatedData = {
                 userName: 'MongoName',
             };
@@ -419,11 +412,6 @@ describe('Users API - complete CRUD', () => {
 
         it('should return 404 if the user to update does not exist', async () => {
             const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-            await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
 
             const updatedData = {
                 userName: 'MongoName',
@@ -489,11 +477,6 @@ describe('Users API - complete CRUD', () => {
 
         it('should return 404 if the user to delete does not exist', async () => {
             const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-            await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
 
             const response = await request(app)
                 .delete(`/api/users/${fakeId}`)
@@ -559,7 +542,7 @@ describe('Users API - complete CRUD', () => {
         });
     });
 
-    describe("User login", () => {
+    describe("POST /api/sessions (login)", () => {
         beforeAll(async () => {
             const newUser = await User.create({
                 email: "juan1@example.com",

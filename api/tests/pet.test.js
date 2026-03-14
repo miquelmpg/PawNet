@@ -2,23 +2,15 @@ import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import app from '../app.js';
 import Pet from "../models/pet.model.js";
-import User from "../models/user.model.js";
-import Session from "../models/session.model.js";
+import { createUserSession } from '../utils/index.js';
 
 describe('Pet API - complete CRUD', () => {
+    let user;
     let cookies;
-    let id;
 
     beforeAll(async () => {
-        const user = await User.create({
-        email: "auth@tests.com",
-        password: "password123",
-        userName: 'JohnDoe',
-        });
-        
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
-        id = user.id;
+        user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
+        cookies = user.cookies;
     });
 
     // ============================================
@@ -46,7 +38,7 @@ describe('Pet API - complete CRUD', () => {
             expect(response.body.bio).toBe('European short hair cat with a calm and friendly nature');
             expect(response.body.weight).toBe(5);
             expect(response.body.birthday).toBe("2020-05-10T00:00:00.000Z");
-            expect(response.body.owner).toBe(id);
+            expect(response.body.owner).toBe(user.id);
             expect(response.body.id).toBeDefined();
 
             const petInDB = await Pet.findById(response.body.id);
@@ -94,7 +86,7 @@ describe('Pet API - complete CRUD', () => {
                 bio: 'European short hair cat with a calm and friendly nature',
                 weight: 5,
                 birthday: '2020-05-10',
-                owner: id,
+                owner: user.id,
             });
 
             const updatedPet = {
@@ -107,7 +99,7 @@ describe('Pet API - complete CRUD', () => {
                 .patch(`/api/pets/${pet.id}`)
                 .set('Cookie', cookies)
                 .send(updatedPet)
-                expect(200);
+                .expect(200);
 
             expect(response.body.name).toBe('Moka');
             expect(response.body.species).toBe('cat');
@@ -161,14 +153,14 @@ describe('Pet API - complete CRUD', () => {
     // ============================================
     // DELETE - DELETE /api/pets/:id
     // ============================================
-    describe('PATCH /api/pets/:id', () => {
+    describe('DELETE /api/pets/:id', () => {
         it('should delete an existing pet', async () => {
             const pet = await Pet.create({
                 name: 'Mona',
                 species: 'dog',
                 bio: 'Friendly and energetic dog',
                 weight: 20,
-                owner: id,
+                owner: user.id,
             });
 
             await request(app)

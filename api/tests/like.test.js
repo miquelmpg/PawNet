@@ -1,39 +1,37 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
-import User from '../models/user.model.js';
-import Session from '../models/session.model.js';
-import Post from '../models/post.model.js';
-import Comment from '../models/comment.model.js';
 import Like from '../models/like.model.js';
+import { createUserSession, createPost, createComment } from '../utils';
 
 describe('Like API - complete CRUD', () => {
-    let cookies;
-    let id;
+    let user, user1, user2, user3, user4, user5;
+    let cookies, cookies1, cookies2, cookies3, cookies4, cookies5;
     let newPost;
     let newComment;
 
     beforeAll(async () => {
-        const user = await User.create({
-            email: "auth@tests.com",
-            password: "password123",
-            userName: 'JohnDoe',
-        });
+        user = await createUserSession("user@example.com", 'password123', 'user');
+        cookies = user.cookies;
+        
+        user1 = await createUserSession("user1@example.com", 'password123', 'userOne');
+        cookies1 = user1.cookies;
 
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
-        id = user.id;
+        user2 = await createUserSession("user2@example.com", 'password123', 'userTwo');
+        cookies2 = user2.cookies;
 
-        newPost = await Post.create({
-            content: 'New post incoming',
-            user: id,
-        });
+        user3 = await createUserSession("user3@example.com", 'password123', 'userThree');
+        cookies3 = user3.cookies;
 
-        newComment = await Comment.create({
-            content: 'New comment incoming',
-            user: id,
-            post: newPost.id,
-        })
+        user4 = await createUserSession("user4@example.com", 'password123', 'userFour');
+        cookies4 = user4.cookies;
+
+        user5 = await createUserSession("user5@example.com", 'password123', 'userFive');
+        cookies5 = user5.cookies;
+
+        newPost = await createPost('New post incoming', user.id);
+
+        newComment = await createComment('New comment incoming', user.id, newPost.id);
     });
 
     // ============================================
@@ -46,13 +44,13 @@ describe('Like API - complete CRUD', () => {
                 .set("Cookie", cookies)
                 .expect(201);
             
-            expect(response.body.user).toBe(id);
+            expect(response.body.user).toBe(user.id);
             expect(response.body.targetId).toBe(newPost.id);
             expect(response.body.id).toBeDefined();
 
             const likeInDB = await Like.findById(response.body.id);
             expect(likeInDB).not.toBeNull();
-            expect(likeInDB.user.toString()).toBe(id);
+            expect(likeInDB.user.toString()).toBe(user.id);
             expect(likeInDB.targetId.toString()).toBe(newPost.id);
         });
 
@@ -62,13 +60,13 @@ describe('Like API - complete CRUD', () => {
                 .set("Cookie", cookies)
                 .expect(201);
             
-            expect(response.body.user).toBe(id);
+            expect(response.body.user).toBe(user.id);
             expect(response.body.targetId).toBe(newComment.id);
             expect(response.body.id).toBeDefined();
 
             const likeInDB = await Like.findById(response.body.id);
             expect(likeInDB).not.toBeNull();
-            expect(likeInDB.user.toString()).toBe(id);
+            expect(likeInDB.user.toString()).toBe(user.id);
             expect(likeInDB.targetId.toString()).toBe(newComment.id);
         });
 
@@ -92,15 +90,28 @@ describe('Like API - complete CRUD', () => {
             expect(likeInDB).toBeNull();
         });
 
-        it('should return 400 if targetId belongs to a user', async () => {
+        it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
             await Like.deleteMany();
 
             const response = await request(app)
-                .post(`/api/likes/${id}/toggle`)
+                .post(`/api/likes/${user.id}/toggle`)
                 .set('Cookie', cookies)
                 .expect(400);
 
             expect(response.body.message).toBe('Invalid post or comment id');
+        });
+
+        it('should return 400 if targetId does not exist', async () => {
+            await Like.deleteMany();
+
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .post(`/api/likes/${fakeId}/toggle`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
 
@@ -133,33 +144,6 @@ describe('Like API - complete CRUD', () => {
         it('should return 3 when 3 users like a post', async () => {
             await Like.deleteMany();
 
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
-
-            const user3 = await User.create({
-                email: 'user3@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session3 = await Session.create({ user: user3._id });
-            const cookies3 = [`sessionId=${session3._id.toString()}`];
-
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set('Cookie', cookies1)
@@ -185,42 +169,6 @@ describe('Like API - complete CRUD', () => {
 
         it('should return 4 when 4 users like a comment', async () => {
             await Like.deleteMany();
-
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
-
-            const user3 = await User.create({
-                email: 'user3@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session3 = await Session.create({ user: user3._id });
-            const cookies3 = [`sessionId=${session3._id.toString()}`];
-
-            const user4 = await User.create({
-                email: 'user4@example.com',
-                password: 'password123',
-                userName: 'userFour',
-            });
-
-            const session4 = await Session.create({ user: user4._id });
-            const cookies4 = [`sessionId=${session4._id.toString()}`];
 
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
@@ -250,15 +198,29 @@ describe('Like API - complete CRUD', () => {
             expect(response.body).toEqual(4);
         });
 
-        it('should return 400 if targetId belongs to a user', async () => {
+        it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
             await Like.deleteMany();
 
             const response = await request(app)
-                .get(`/api/likes/${id}/count-likes`)
+                .get(`/api/likes/${user.id}/count-likes`)
                 .set('Cookie', cookies)
                 .expect(400);
 
             expect(response.body.message).toBe('Invalid post or comment id');
+        });
+
+        
+        it('should return 400 if targetId does not exist', async () => {
+            await Like.deleteMany();
+
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .get(`/api/likes/${fakeId}/count-likes`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
 
@@ -340,15 +302,28 @@ describe('Like API - complete CRUD', () => {
             expect(response.body.liked).toBe(false);
         });
 
-        it('should return 400 if targetId belongs to a user', async () => {
+        it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
             await Like.deleteMany();
 
             const response = await request(app)
-                .get(`/api/likes/${id}/is-liked`)
+                .get(`/api/likes/${user.id}/is-liked`)
                 .set('Cookie', cookies)
                 .expect(400);
 
             expect(response.body.message).toBe('Invalid post or comment id');
+        });
+        
+        it('should return 400 if targetId does not exist', async () => {
+            await Like.deleteMany();
+
+            const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
+
+            const response = await request(app)
+                .get(`/api/likes/${fakeId}/is-liked`)
+                .set('Cookie', cookies)
+                .expect(404);
+
+            expect(response.body.message).toBe('Recourse not found');
         });
     });
 
@@ -358,51 +333,6 @@ describe('Like API - complete CRUD', () => {
     describe('Complete CRUD Flow', () => {
         it("should create, delete, and get a user’s like", async () => {
             await Like.deleteMany();
-
-            const user1 = await User.create({
-                email: 'user1@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session1 = await Session.create({ user: user1._id });
-            const cookies1 = [`sessionId=${session1._id.toString()}`];
-
-            const user2 = await User.create({
-                email: 'user2@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session2 = await Session.create({ user: user2._id });
-            const cookies2 = [`sessionId=${session2._id.toString()}`];
-
-            const user3 = await User.create({
-                email: 'user3@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session3 = await Session.create({ user: user3._id });
-            const cookies3 = [`sessionId=${session3._id.toString()}`];
-
-            const user4 = await User.create({
-                email: 'user4@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session4 = await Session.create({ user: user4._id });
-            const cookies4 = [`sessionId=${session4._id.toString()}`];
-
-            const user5 = await User.create({
-                email: 'user5@example.com',
-                password: 'password123',
-                userName: 'userOne',
-            });
-
-            const session5 = await Session.create({ user: user5._id });
-            const cookies5 = [`sessionId=${session5._id.toString()}`];
 
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)

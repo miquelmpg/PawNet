@@ -5,27 +5,21 @@ import User from '../models/user.model.js';
 import Session from '../models/session.model.js';
 import Post from '../models/post.model.js';
 import Comment from '../models/comment.model.js';
+import { createUserSession, createPost, createComment } from '../utils';
 
 describe('Comment API - complete CRUD', () => {
+    let user;
     let cookies;
-    let id;
     let newPost;
+    let newComment;
 
     beforeAll(async () => {
-        const user = await User.create({
-            email: "auth@tests.com",
-            password: "password123",
-            userName: 'JohnDoe',
-        });
-        
-        const session = await Session.create({ user: user._id });
-        cookies = [`sessionId=${session._id.toString()}`];
-        id = user.id;
+        user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
+        cookies = user.cookies;
 
-        newPost = await Post.create({
-            content: 'New post incoming',
-            user: id,
-        });
+        newPost = await createPost('New post incoming', user.id);
+
+        newComment = await createComment('New comment incoming', user.id, newPost.id);
     });
 
     // ============================================
@@ -44,7 +38,7 @@ describe('Comment API - complete CRUD', () => {
                 .expect(201);
             
             expect(response.body.content).toBe('This is a new comment');
-            expect(response.body.user).toBe(id);
+            expect(response.body.user).toBe(user.id);
             expect(response.body.post).toBeDefined(newPost.id);
 
             const commentInDB = await Comment.findById(response.body.id);
@@ -55,7 +49,7 @@ describe('Comment API - complete CRUD', () => {
         it('should return 400 if comment content is missing', async () => {
             const badComment = {
                 post: newPost.id,
-                user: id,
+                user: user.id,
             };
 
             const response = await request(app)
@@ -73,15 +67,6 @@ describe('Comment API - complete CRUD', () => {
     // ============================================
     describe("DELETE /posts/:id/comments/:commentId", () => {
         it("should delete your own comment", async () => {
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
-
             const post = await Post.create({
                 content: 'This is my post',
                 user: user.id,
@@ -120,15 +105,6 @@ describe('Comment API - complete CRUD', () => {
                 post: otherPost.id,
             })
 
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
-
             const response = await request(app)
                 .delete(`/api/posts/${otherComment.post}/comments/${otherComment.id}`)
                 .set('Cookie', cookies);
@@ -139,14 +115,6 @@ describe('Comment API - complete CRUD', () => {
 
         it('should return 404 if the comment to delete does not exist', async () => {
             const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-            const user = await User.create({
-                email: 'auth@tests.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-            });
-
-            const session = await Session.create({ user: user._id });
-            cookies = [`sessionId=${session._id.toString()}`];
 
             const post = await Post.create({
                 content: 'This is my post',
@@ -175,7 +143,7 @@ describe('Comment API - complete CRUD', () => {
         it('should create, get and delete a comment', async () => {
             const newComment = {
                 content: 'This is a complete CRUD flow comment',
-                user: id,
+                user: user.id,
                 post: newPost.id,
             }
 
