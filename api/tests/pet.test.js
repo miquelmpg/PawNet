@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import request from "supertest";
 import app from '../app.js';
 import Pet from "../models/pet.model.js";
@@ -7,10 +7,44 @@ import { createUserSession } from '../utils/index.js';
 describe('Pet API - complete CRUD', () => {
     let user;
     let cookies;
+    let newPet;
+    let pet;
+    let updatedPet;
+    let fakeId;
 
     beforeAll(async () => {
         user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
         cookies = user.cookies;
+
+        fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
+
+        updatedPet = {
+            name: 'Moka',
+            weight: 3.5,
+            birthday: '2020-04-09',
+        };
+    });
+
+    beforeEach(async () => {
+        await Pet.deleteMany({});
+
+        newPet =  {
+            name: 'Mochi',
+            species: 'cat',
+            bio: 'European short hair cat with a calm and friendly nature',
+            weight: 5,
+            birthday: '2020-05-10',
+            owner: user.id,
+        };
+
+        pet = await Pet.create({
+            name: 'Mochi',
+            species: 'cat',
+            bio: 'European short hair cat with a calm and friendly nature',
+            weight: 5,
+            birthday: '2020-05-10',
+            owner: user.id,
+        });
     });
 
     // ============================================
@@ -18,15 +52,6 @@ describe('Pet API - complete CRUD', () => {
     // ============================================
     describe('POST /api/pets', () => {
         it('should correctly create a new pet', async () => {
-
-            const newPet = {
-                name: 'Mochi',
-                species: 'cat',
-                bio: 'European short hair cat with a calm and friendly nature',
-                weight: 5,
-                birthday: '2020-05-10',
-            };
-
             const response = await request(app)
                 .post('/api/pets')
                 .set("Cookie", cookies)
@@ -47,28 +72,24 @@ describe('Pet API - complete CRUD', () => {
         });
 
         it('should return 400 if pet name is missing', async () => {
-            const badPet = {
-                species: 'cat',
-            };
+            delete newPet.name;
 
             const response = await request(app)
                 .post('/api/pets')
                 .set("Cookie", cookies)
-                .send(badPet)
+                .send(newPet)
                 .expect(400);
             
             expect(response.body.name.message).toBe('Path `name` is required.');
         });
 
         it('should return 400 if pet species is missing', async () => {
-            const badPet = {
-                name: 'Mochi',
-            };
+            delete newPet.species;
 
             const response = await request(app)
                 .post('/api/pets')
                 .set("Cookie", cookies)
-                .send(badPet)
+                .send(newPet)
                 .expect(400);
             
             expect(response.body.species.message).toBe('Path `species` is required.');
@@ -80,21 +101,6 @@ describe('Pet API - complete CRUD', () => {
     // ============================================
     describe('PATCH /api/pets/:id', () => {
         it('should partially update an existing pet', async () => {
-            const pet = await Pet.create({
-                name: 'Mochi',
-                species: 'cat',
-                bio: 'European short hair cat with a calm and friendly nature',
-                weight: 5,
-                birthday: '2020-05-10',
-                owner: user.id,
-            });
-
-            const updatedPet = {
-                name: 'Moka',
-                weight: 3.5,
-                birthday: '2020-04-09',
-            };
-
             const response = await request(app)
                 .patch(`/api/pets/${pet.id}`)
                 .set('Cookie', cookies)
@@ -112,21 +118,14 @@ describe('Pet API - complete CRUD', () => {
         });
 
         it('should return 403 if you try to update a pet you do not own', async () => {
-            const fakeOwnerId = "64f1a2b3c4d5e6f7a8b9c0d1";
             const pet = await Pet.create({
                 name: 'Mochi',
                 species: 'cat',
                 bio: 'European short hair cat with a calm and friendly nature',
                 weight: 5,
                 birthday: '2020-05-10',
-                owner: fakeOwnerId,
+                owner: fakeId,
             });
-
-            const updatedPet = {
-                name: 'Moka',
-                weight: 3.5,
-                birthday: '2020-04-09',
-            };
 
             const response = await request(app)
                 .patch(`/api/pets/${pet.id}`)
@@ -138,7 +137,6 @@ describe('Pet API - complete CRUD', () => {
         });
 
         it('should return 404 if the pet to update does not exist', async () => {
-            const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
 
             const response = await request(app)
                 .patch(`/api/pets/${fakeId}`)
@@ -155,14 +153,6 @@ describe('Pet API - complete CRUD', () => {
     // ============================================
     describe('DELETE /api/pets/:id', () => {
         it('should delete an existing pet', async () => {
-            const pet = await Pet.create({
-                name: 'Mona',
-                species: 'dog',
-                bio: 'Friendly and energetic dog',
-                weight: 20,
-                owner: user.id,
-            });
-
             await request(app)
                 .delete(`/api/pets/${pet.id}`)
                 .set('Cookie', cookies)
@@ -173,14 +163,13 @@ describe('Pet API - complete CRUD', () => {
         });
 
         it('should return 403 if you try to delete a pet you do not own', async () => {
-            const fakeOwnerId = "64f1a2b3c4d5e6f7a8b9c0d1";
             const pet = await Pet.create({
                 name: 'Mochi',
                 species: 'cat',
                 bio: 'European short hair cat with a calm and friendly nature',
                 weight: 5,
                 birthday: '2020-05-10',
-                owner: fakeOwnerId,
+                owner: fakeId,
             });
 
             const response = await request(app)
@@ -192,8 +181,6 @@ describe('Pet API - complete CRUD', () => {
         });
 
         it('should return 404 if the pet to delete does not exist', async () => {
-            const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-
             const response = await request(app)
                 .delete(`/api/pets/${fakeId}`)
                 .set('Cookie', cookies);
@@ -211,13 +198,7 @@ describe('Pet API - complete CRUD', () => {
             const createRes = await request(app)
             .post('/api/pets')
             .set('Cookie', cookies)
-            .send({
-                name: 'Galeta',
-                species: 'cat',
-                bio: 'Loves cuddles and exploring',
-                weight: 4,
-                birthday: '2026-01-01',
-            })
+            .send(newPet)
             .expect(201);
 
             const petId = createRes.body.id;
@@ -225,11 +206,15 @@ describe('Pet API - complete CRUD', () => {
             const updateRes = await request(app)
                 .patch(`/api/pets/${petId}`)
                 .set('Cookie', cookies)
-                .send({ name: 'Moka', bio: 'Hides and does not come when called'})
+                .send(updatedPet)
                 .expect(200);
             
             expect(updateRes.body.name).toBe('Moka');
-            expect(updateRes.body.bio).toBe('Hides and does not come when called');
+            expect(updateRes.body.species).toBe('cat');
+            expect(updateRes.body.bio).toBe('European short hair cat with a calm and friendly nature');
+            expect(updateRes.body.weight).toBe(3.5);
+            expect(updateRes.body.birthday).toBe('2020-04-09T00:00:00.000Z');
+            expect(updateRes.body.weight).toBe(3.5);
 
             await request(app)
                 .delete(`/api/pets/${petId}`)

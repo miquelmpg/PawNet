@@ -34,6 +34,10 @@ describe('Like API - complete CRUD', () => {
         newComment = await createComment('New comment incoming', user.id, newPost.id);
     });
 
+    beforeEach(async () => {
+        await Like.deleteMany({});
+    });
+
     // ============================================
     // CREATE - POST /api/likes/:targetId/toggle
     // ============================================
@@ -71,6 +75,11 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should correctly delete a like from a post', async () => {
+            await request(app)
+                .post(`/api/likes/${newPost.id}/toggle`)
+                .set("Cookie", cookies)
+                .expect(201);
+
             const response = await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set("Cookie", cookies)
@@ -81,6 +90,11 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should correctly delete a like from a comment', async () => {
+            await request(app)
+                .post(`/api/likes/${newComment.id}/toggle`)
+                .set("Cookie", cookies)
+                .expect(201);
+
             const response = await request(app)
                 .post(`/api/likes/${newComment.id}/toggle`)
                 .set("Cookie", cookies)
@@ -91,8 +105,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
-            await Like.deleteMany();
-
             const response = await request(app)
                 .post(`/api/likes/${user.id}/toggle`)
                 .set('Cookie', cookies)
@@ -102,8 +114,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 400 if targetId does not exist', async () => {
-            await Like.deleteMany();
-
             const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
 
             const response = await request(app)
@@ -111,7 +121,7 @@ describe('Like API - complete CRUD', () => {
                 .set('Cookie', cookies)
                 .expect(404);
 
-            expect(response.body.message).toBe('Recourse not found');
+            expect(response.body.message).toBe('Resource not found');
         });
     });
 
@@ -120,8 +130,6 @@ describe('Like API - complete CRUD', () => {
     // ============================================
     describe('GET /api/likes/:targetId/count-likes', () => {
         it('should return 0 if there are no likes on a post', async () => {
-            await Like.deleteMany();
-
             const response = await request(app)
                 .get(`/api/likes/${newPost.id}/count-likes`)
                 .set('Cookie', cookies)
@@ -130,9 +138,7 @@ describe('Like API - complete CRUD', () => {
             expect(response.body).toEqual(0);
         });
 
-        it('should return 0 if there are no likes on a post', async () => {
-            await Like.deleteMany();
-
+        it('should return 0 if there are no likes on a comment', async () => {
             const response = await request(app)
                 .get(`/api/likes/${newComment.id}/count-likes`)
                 .set('Cookie', cookies)
@@ -142,8 +148,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 3 when 3 users like a post', async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set('Cookie', cookies1)
@@ -168,30 +172,28 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 4 when 4 users like a comment', async () => {
-            await Like.deleteMany();
-
             await request(app)
-                .post(`/api/likes/${newPost.id}/toggle`)
+                .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies1)
                 .expect(201);
 
             await request(app)
-                .post(`/api/likes/${newPost.id}/toggle`)
+                .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies2)
                 .expect(201);
 
             await request(app)
-                .post(`/api/likes/${newPost.id}/toggle`)
+                .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies3)
                 .expect(201);
 
             await request(app)
-                .post(`/api/likes/${newPost.id}/toggle`)
+                .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies4)
                 .expect(201);
 
             const response = await request(app)
-                .get(`/api/likes/${newPost.id}/count-likes`)
+                .get(`/api/likes/${newComment.id}/count-likes`)
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -199,8 +201,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
-            await Like.deleteMany();
-
             const response = await request(app)
                 .get(`/api/likes/${user.id}/count-likes`)
                 .set('Cookie', cookies)
@@ -211,8 +211,6 @@ describe('Like API - complete CRUD', () => {
 
         
         it('should return 400 if targetId does not exist', async () => {
-            await Like.deleteMany();
-
             const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
 
             const response = await request(app)
@@ -220,17 +218,15 @@ describe('Like API - complete CRUD', () => {
                 .set('Cookie', cookies)
                 .expect(404);
 
-            expect(response.body.message).toBe('Recourse not found');
+            expect(response.body.message).toBe('Resource not found');
         });
     });
 
     // ============================================
     // GET IS LIKED - GET /api/likes/:targetId/is-liked
     // ============================================
-    describe('GET /api/likes/:targetId/count-likes', () => {
+    describe('GET /api/likes/:targetId/is-liked', () => {
         it('should return true if the user liked a post', async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set('Cookie', cookies)
@@ -245,8 +241,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return false if the user removed a like from a post', async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set('Cookie', cookies)
@@ -266,8 +260,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return true if the user liked a comment', async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies)
@@ -282,8 +274,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return false if the user removed a like from a comment', async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newComment.id}/toggle`)
                 .set('Cookie', cookies)
@@ -303,8 +293,6 @@ describe('Like API - complete CRUD', () => {
         });
 
         it('should return 400 if the targetId belongs to a user instead of a post or comment', async () => {
-            await Like.deleteMany();
-
             const response = await request(app)
                 .get(`/api/likes/${user.id}/is-liked`)
                 .set('Cookie', cookies)
@@ -314,8 +302,6 @@ describe('Like API - complete CRUD', () => {
         });
         
         it('should return 400 if targetId does not exist', async () => {
-            await Like.deleteMany();
-
             const fakeId = '642f1f1f1f1f1f1f1f1f1f1f';
 
             const response = await request(app)
@@ -323,7 +309,7 @@ describe('Like API - complete CRUD', () => {
                 .set('Cookie', cookies)
                 .expect(404);
 
-            expect(response.body.message).toBe('Recourse not found');
+            expect(response.body.message).toBe('Resource not found');
         });
     });
 
@@ -332,8 +318,6 @@ describe('Like API - complete CRUD', () => {
     // ============================================
     describe('Complete CRUD Flow', () => {
         it("should create, delete, and get a user’s like", async () => {
-            await Like.deleteMany();
-
             await request(app)
                 .post(`/api/likes/${newPost.id}/toggle`)
                 .set('Cookie', cookies1)

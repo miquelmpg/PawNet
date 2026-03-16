@@ -1,17 +1,36 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
+import mongoose from 'mongoose';
 import app from '../app.js';
 import User from '../models/user.model.js';
 import Session from '../models/session.model.js';
 import { createUserSession, authRequest } from '../utils';
 
 describe('Users API', () => {
-    let user;
+    let user, newUser;
     let cookies;
+    let fakeId;
 
     beforeAll(async () => {
         user = await createUserSession("auth@tests.com", 'password123', 'JohnDoe');
         cookies = user.cookies;
+
+        fakeId = new mongoose.Types.ObjectId();
+    });
+
+    beforeEach(async () => {
+
+        newUser = {
+            email: 'john@example.com',
+            password: 'password123',
+            userName: 'JohnDoe',
+            firstName: 'John',
+            lastName: 'Doe',
+            bio: 'Junior Full-Stack Developer passionate about JavaScript',
+            location: 'Barcelona',
+            birthday: '2000-05-10',
+            gender: 'male',
+        }
     });
 
     // ============================================
@@ -19,18 +38,6 @@ describe('Users API', () => {
     // ============================================
     describe('POST /api/users', () => {
         it('should correctly create a new user', async () => {
-            const newUser = {
-                email: 'john@example.com',
-                password: 'password123',
-                userName: 'JohnDoe',
-                firstName: 'John',
-                lastName: 'Doe',
-                bio: 'Junior Full-Stack Developer passionate about JavaScript',
-                location: 'Barcelona',
-                birthday: '2000-05-10',
-                gender: 'male',
-            }
-
             const response = await request(app)
                 .post('/api/users')
                 .send(newUser)
@@ -55,11 +62,12 @@ describe('Users API', () => {
         });
 
         it('should create a user without optional fields', async () => {
-            const newUser = {
-                email: 'john@example.com',
-                password: 'password123',
-                userName: 'JohnDoe', 
-            }
+            delete newUser.firstName;
+            delete newUser.lastName;
+            delete newUser.bio;
+            delete newUser.location;
+            delete newUser.birthday;
+            delete newUser.gender;
 
             const response = await request(app)
                 .post('/api/users')
@@ -72,54 +80,40 @@ describe('Users API', () => {
         });
 
         it('should return 400 if email is missing', async () => {
-            const badUser = {
-                password: 'password123',
-                userName: 'JohnDoe', 
-            }
+            delete newUser.email;
 
             const response = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(400);
             
             expect(response.body.email.message).toBe("Path `email` is required.");
         });
 
         it('should return 400 if email has invalid format', async () => {
-            const badUser = {
-                email: 'invalid-email',
-                password: 'password123',
-                userName: 'JohnDoe', 
-            }
+            newUser.email = 'invalid-email';
 
             const response = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(400);
             
             expect(response.body.email.message).toContain("is invalid");
         });
 
         it('should return 400 if password is missing', async () => {
-            const badUser = {
-                email: 'john@example.com',
-                userName: 'JohnDoe', 
-            }
+            delete newUser.password;
 
             const response = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(400);
             
             expect(response.body.password.message).toBe("Path `password` is required.");
         });
 
         it('should return 400 if password is too short', async () => {
-            const newUser = {
-                email: 'john@example.com',
-                password: '123',
-                userName: 'JohnDoe', 
-            }
+            newUser.password = '123';
 
             const response = await request(app)
                 .post('/api/users')
@@ -130,40 +124,31 @@ describe('Users API', () => {
         });
 
         it('should return 400 if userName is missing', async () => {
-            const badUser = {
-                email: 'john@example.com',
-                password: 'password123', 
-            }
+            delete newUser.userName;
 
             const response = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(400);
             
             expect(response.body.userName.message).toBe("Path `userName` is required.");
         });
 
         it('should return 409 if email is already registered', async () => {
-            await User.deleteMany();
+            await User.deleteMany({});
 
             await User.collection.createIndex({ email: 1 }, { unique: true });
 
-            const badUser = {
-                email: 'john@example.com',
-                password: 'password123', 
-                userName: 'JohnDoe',
-            }
-
             const response = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(201);
             
             expect(response.body.email).toBe("john@example.com");
 
             const responseTwo = await request(app)
                 .post('/api/users')
-                .send(badUser)
+                .send(newUser)
                 .expect(409);
             
             expect(responseTwo.body.message).toBe("Resource already exist");
@@ -267,7 +252,7 @@ describe('Users API', () => {
             expect(response.body.userName).toBe('JohnDoe');
         });
 
-        it("should include the user's books (populate)", async () => {
+        it("should include the user's pet (populate)", async () => {
             const user = await User.create ({
                 email: 'john@example.com',
                 password: 'password123',
@@ -300,8 +285,6 @@ describe('Users API', () => {
         });
 
         it('should return 404 if the user does not exist', async () => {
-            const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-
             const response = await request(app)
                 .get(`/api/users/${fakeId}`)
                 .set("Cookie", cookies)
@@ -411,8 +394,6 @@ describe('Users API', () => {
         });
 
         it('should return 404 if the user to update does not exist', async () => {
-            const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-
             const updatedData = {
                 userName: 'MongoName',
             };
@@ -476,8 +457,6 @@ describe('Users API', () => {
         });
 
         it('should return 404 if the user to delete does not exist', async () => {
-            const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
-
             const response = await request(app)
                 .delete(`/api/users/${fakeId}`)
                 .set('Cookie', cookies);

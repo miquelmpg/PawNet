@@ -89,7 +89,6 @@ export async function nameList(req, res) {
         criteria.userName = {
             $regex: req.query.userName,
             $options: "i",
-            $ne: req.session.user.userName
         };
     }
 

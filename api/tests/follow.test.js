@@ -25,13 +25,15 @@ describe('Follow API - complete CRUD', () => {
         cookies4 = user4.cookies;
     });
 
+    beforeEach(async () => {
+        await Follow.deleteMany({});
+    });
+
     // ============================================
     // CREATE - POST /api/follows/:id/toggle
     // ============================================
     describe('POST /api/follows/:targetId/toggle', () => {
         it('should correctly follow a user', async () => {
-            await Follow.deleteMany();
-
             const response = await request(app)
                 .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
@@ -48,8 +50,6 @@ describe('Follow API - complete CRUD', () => {
         });
 
         it('should correctly unfollow a user', async () => {
-            await Follow.deleteMany();
-
             await request(app)
                 .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
@@ -109,7 +109,32 @@ describe('Follow API - complete CRUD', () => {
     // GET - GET /api/follows/:id/followers
     // ============================================
     describe('GET /api/follows/:id/followers', () => {
-        it('should return the number of followers', async () => {                
+        it('should return the number of followers', async () => { 
+            await request(app)
+                .post(`/api/follows/${user.id}/toggle`)
+                .set("Cookie", cookies1)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/follows/${user.id}/toggle`)
+                .set("Cookie", cookies2)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/follows/${user.id}/toggle`)
+                .set("Cookie", cookies2)
+                .expect(204);
+
+            await request(app)
+                .post(`/api/follows/${user.id}/toggle`)
+                .set("Cookie", cookies3)
+                .expect(201);
+
+            await request(app)
+                .post(`/api/follows/${user.id}/toggle`)
+                .set("Cookie", cookies4)
+                .expect(201);
+
             const response = await request(app)
                 .get(`/api/follows/${user.id}/followers`)
                 .set("Cookie", cookies)
@@ -135,8 +160,6 @@ describe('Follow API - complete CRUD', () => {
     // ============================================
     describe('POST /api/likes/:targetId/toggle', () => {
         it('should return the number of following users', async () => {
-            await Follow.deleteMany();
-
             await request(app)
                 .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies1)
@@ -198,8 +221,6 @@ describe('Follow API - complete CRUD', () => {
     // ============================================
     describe('Complete CRUD Flow', () => {
         it('should create, delete and get followers or following', async () => {
-            await Follow.deleteMany();
-
             await request(app)
                 .post(`/api/follows/${user.id}/toggle`)
                 .set("Cookie", cookies2)

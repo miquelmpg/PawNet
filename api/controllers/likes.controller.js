@@ -16,7 +16,7 @@ export async function toggle(req, res) {
     }
 
     if(!user && !post && !comment) {
-        throw createHttpError(404, 'Recourse not found');
+        throw createHttpError(404, 'Resource not found');
     }
 
     const like = await Like.findOne({ 
@@ -48,7 +48,7 @@ export async function getLike(req, res) {
     }
 
     if(!user && !post && !comment) {
-        throw createHttpError(404, 'Recourse not found');
+        throw createHttpError(404, 'Resource not found');
     }
 
     const userId = req.session.user.id;
@@ -70,7 +70,7 @@ export async function count(req, res) {
     }
 
     if(!user && !post && !comment) {
-        throw createHttpError(404, 'Recourse not found');
+        throw createHttpError(404, 'Resource not found');
     }
     
     const likesCount = await Like.countDocuments({ targetId });

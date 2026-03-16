@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import request from 'supertest';
 import app from '../app.js';
 import Post from '../models/post.model.js';
@@ -14,8 +14,15 @@ describe('Post API - complete CRUD', () => {
         cookies = user.cookies;
 
         otherUser = await createUserSession("other@tests.com", 'password123', 'OtherUser');
+    });
 
-        newPost = await createPost('New post incoming', user.id);
+    beforeEach(async() => {
+        await Post.deleteMany({});
+
+        newPost = {
+            content: 'This is a new post',
+            user: user.id,
+        };
     });
 
     // ============================================
@@ -23,11 +30,6 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe('POST /api/posts', () => {
         it('should correctly create a new post', async () => {
-            const newPost = {
-                content: 'This is a new post',
-                user: user.id,
-            };
-
             const response = await request(app)
                 .post('/api/posts')
                 .set("Cookie", cookies)
@@ -44,14 +46,12 @@ describe('Post API - complete CRUD', () => {
         });
 
         it('should return 400 if post content is missing', async () => {
-            const badPost = {
-                user: user.id,
-            };
+            delete newPost.content;
 
             const response = await request(app)
                 .post('/api/posts')
                 .set("Cookie", cookies)
-                .send(badPost)
+                .send(newPost)
                 .expect(400);
             
             expect(response.body.content.message).toBe('Path `content` is required.');
@@ -63,8 +63,6 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe('GET /api/posts', () => {
         it('should return an empty array if there are no posts', async () => {
-            await Post.deleteMany();
-
             const response = await request(app)
                 .get('/api/posts/search')
                 .set('Cookie', cookies)
@@ -76,21 +74,21 @@ describe('Post API - complete CRUD', () => {
         it('should return all existing posts', async () => {
 
             Promise.all([
-            await Post.create({
-                content: 'user1@example.com',
-                user: user.id,
+                await Post.create({
+                    content: 'user1@example.com',
+                    user: user.id,
             }),
-            await Post.create({
-                content: 'user2@example.com',
-                user: user.id,
+                await Post.create({
+                    content: 'user2@example.com',
+                    user: user.id,
             }),
-            await Post.create({
-                content: 'user3@example.com',
-                user: user.id,
+                await Post.create({
+                    content: 'user3@example.com',
+                    user: user.id,
             }),
-            await Post.create({
-                content: 'user4@example.com',
-                user: user.id,
+                await Post.create({
+                    content: 'user4@example.com',
+                    user: user.id,
             })]);      
 
             const response = await request(app)
@@ -104,6 +102,25 @@ describe('Post API - complete CRUD', () => {
         });
 
         it('should return filer post by content that contains "user4"', async () => {
+
+            Promise.all([
+                await Post.create({
+                    content: 'user1@example.com',
+                    user: user.id,
+            }),
+                await Post.create({
+                    content: 'user2@example.com',
+                    user: user.id,
+            }),
+                await Post.create({
+                    content: 'user3@example.com',
+                    user: user.id,
+            }),
+                await Post.create({
+                    content: 'user4@example.com',
+                    user: user.id,
+            })]);     
+
             const response = await request(app)
                 .get('/api/posts/search')
                 .query({ content: 'user4' })
@@ -119,10 +136,7 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe('GET /api/users/:id', () => {
         it("should include the post's comments (populate)", async () => {           
-            const post = await Post.create({
-                content: 'user1@example.com',
-                user: user.id,
-            });
+            await createPost('user1@example.com', user.id);
 
             const response = await request(app)
                 .get(`/api/posts/search`)
@@ -139,10 +153,7 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe("DELETE /api/posts/:id", () => {
         it("should delete your own post", async () => {
-            const post = await Post.create({
-                content: 'This is my post',
-                user: user.id,
-            });
+            const post = await createPost('user1@example.com', user.id);
 
             await request(app)
                 .delete(`/api/posts/${post.id}`)
@@ -154,10 +165,7 @@ describe('Post API - complete CRUD', () => {
         });
 
         it('should return 403 if you try to delete a post you do not own', async () => {
-            const otherPost = await Post.create({
-                content: 'This is an other post',
-                user: otherUser.id,
-            })
+            const otherPost = await createPost('This is an other post', otherUser.id);
 
             const response = await request(app)
                 .delete(`/api/posts/${otherPost.id}`)
@@ -170,10 +178,7 @@ describe('Post API - complete CRUD', () => {
         it('should return 404 if the post to delete does not exist', async () => {
             const fakeId = "64f1a2b3c4d5e6f7a8b9c0d1";
 
-            const post = await Post.create({
-                content: 'This is my post',
-                user: user.id,
-            });
+            await createPost('This is my post', user.id);
 
             const response = await request(app)
                 .delete(`/api/posts/${fakeId}`)
@@ -189,11 +194,6 @@ describe('Post API - complete CRUD', () => {
     // ============================================
     describe('Complete CRUD Flow', () => {
         it('should create, get and delete a post', async () => {
-            const newPost = {
-                content: 'This is a complete CRUD flow post',
-                user: user.id,
-            }
-
             const createRes = await request(app)
                 .post('/api/posts')
                 .set('Cookie', cookies)
@@ -208,7 +208,7 @@ describe('Post API - complete CRUD', () => {
                 .set("Cookie", cookies)
                 .expect(200);
     
-                expect(readRes.body[0].content).toBe('This is a complete CRUD flow post');
+                expect(readRes.body[0].content).toBe('This is a new post');
 
             await request(app)
                 .delete(`/api/posts/${postId}`)
