@@ -154,9 +154,9 @@ describe('Users API', () => {
     });
 
     // ============================================
-    // GET ALL - GET /api/users/search
+    // GET ALL - GET /api/users
     // ============================================
-    describe('GET /api/users/search', () => {
+    describe('GET /api/users', () => {
         let user;
         let cookies;
         
@@ -176,7 +176,7 @@ describe('Users API', () => {
             await User.deleteMany({});
 
             const response = await request(app)
-                .get('/api/users/search')
+                .get('/api/users')
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -185,7 +185,7 @@ describe('Users API', () => {
 
         it('should return all existing users', async () => {
             const response = await request(app)
-                .get('/api/users/search')
+                .get('/api/users')
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -196,7 +196,7 @@ describe('Users API', () => {
 
         it('should return filer users by userName that contains "four"', async () => {
             const response = await request(app)
-                .get('/api/users/search')
+                .get('/api/users')
                 .query({ userName: 'four' })
                 .set('Cookie', cookies)
                 .expect(200);

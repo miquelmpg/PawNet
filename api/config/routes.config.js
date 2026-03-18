@@ -8,25 +8,23 @@ import * as comments from "../controllers/comments.controller.js";
 import * as likes from "../controllers/likes.controller.js";
 import * as follows from "../controllers/follows.controller.js";
 
-import upload from "../config/multer.config.js";
-
 const router = Router();
 
 router.post("/users", users.create);
 router.post("/sessions", users.login);
 router.delete("/sessions", users.logout);
 
-router.get('/users/search', users.nameList);
+router.get('/users', users.usersList);
 router.get("/users/:id", users.detail);
-router.patch("/users/:id", upload.single("avatar"), users.update);
+router.patch("/users/:id", users.update);
 router.delete("/users/:id", users.remove);
 
 router.post('/pets', pets.create);
 router.delete('/pets/:id', pets.remove);
-router.patch('/pets/:id', upload.single("avatar"), pets.update);
+router.patch('/pets/:id', pets.update);
 
 router.post("/posts", posts.createPost);
-router.get("/posts/search", posts.list);
+router.get("/posts", posts.postsList);
 router.delete("/posts/:id", posts.deletePost);
 
 router.post("/posts/:id/comments", comments.createComment);

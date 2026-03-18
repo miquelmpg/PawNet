@@ -82,7 +82,7 @@ export async function update(req, res) {
     res.json(req.session.user);
 }
 
-export async function nameList(req, res) {
+export async function usersList(req, res) {
     const criteria = {};
 
     if (req.query.userName) {

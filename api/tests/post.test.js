@@ -63,7 +63,7 @@ describe('Post API - complete CRUD', () => {
     });
 
     // ============================================
-    // GET ALL - GET /api/posts/search
+    // GET ALL - GET /api/posts
     // ============================================
     describe('GET /api/posts', () => {
         beforeEach(async () => {
@@ -94,7 +94,7 @@ describe('Post API - complete CRUD', () => {
         it('should return an empty array if there are no posts', async () => {
             await Post.deleteMany({});
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -103,7 +103,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return all existing posts', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -114,7 +114,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return filtered post by content that contains "user4"', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .query({ content: 'user4' })
                 .set('Cookie', cookies)
                 .expect(200);
@@ -124,7 +124,7 @@ describe('Post API - complete CRUD', () => {
         
         it('should return filtered post by max date', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .query({ maxDate: '2026-03-17T00:00:00+00:00'})
                 .set('Cookie', cookies)
                 .expect(200);
@@ -135,7 +135,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return filtered post by min date', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .query({ minDate: '2026-03-18T00:00:00+00:00'})
                 .set('Cookie', cookies)
                 .expect(200);
@@ -146,7 +146,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return filtered post by max and min date', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .query({ maxDate: '2026-03-18T00:00:00+00:00'})
                 .query({ minDate: '2026-03-16T00:00:00+00:00'})
                 .set('Cookie', cookies)
@@ -159,7 +159,7 @@ describe('Post API - complete CRUD', () => {
 
         it('should return posts filtered by page 2 with limit 2', async () => {
             const response = await request(app)
-                .get('/api/posts/search')
+                .get('/api/posts')
                 .query({ page: 4})
                 .query({ limit: 1})
                 .set('Cookie', cookies)
@@ -179,7 +179,7 @@ describe('Post API - complete CRUD', () => {
             await createPost('user1@example.com', user.id);
 
             const response = await request(app)
-                .get(`/api/posts/search`)
+                .get(`/api/posts`)
                 .set('Cookie', cookies)
                 .expect(200);
 
@@ -242,7 +242,7 @@ describe('Post API - complete CRUD', () => {
             expect(postId).toBeDefined();
 
             const readRes = await request(app)
-                .get(`/api/posts/search`)
+                .get(`/api/posts`)
                 .set("Cookie", cookies)
                 .expect(200);
     

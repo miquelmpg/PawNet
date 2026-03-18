@@ -10,7 +10,7 @@ export async function createPost(req, res) {
     res.status(201).json(post);
 }
 
-export async function list(req, res) {
+export async function postsList(req, res) {
     const criteria = {};
 
     if (req.query.content) {
