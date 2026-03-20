@@ -24,8 +24,8 @@ function UserPage() {
             {user &&
                 <div key={user.id}>
                     <div>{user.userName}</div>
+                    
                     <div>Animales</div>
-
                     {user.pets.map((pet) => (
                     <div>
                         <div>
@@ -33,8 +33,8 @@ function UserPage() {
                         </div>
                     </div>
                     ))}
-                    <div>Posts</div>
 
+                    <div>Posts</div>
                     {user.posts.map((post) => (
                     <div>
                         <div>

@@ -25,8 +25,8 @@ export function logout() {
     return http.delete('/sessions');
 }
 
-export function usersList() {
-    return http.get('/users');
+export function usersList(search) {
+    return http.get(`/users?userName=${search}`);
 }
 
 export function getProfile(id) {
@@ -59,4 +59,8 @@ export function createComment(postId, comment) {
 
 export function deleteComment(postId, commentId) {
     return http.delete(`/posts/${postId}/comments/${commentId}`);
+}
+
+export function createFollow(id) {
+    return http.post(`/follows/${id}/toggle`);
 }
