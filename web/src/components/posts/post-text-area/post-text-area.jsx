@@ -1,4 +1,5 @@
 import { useAuth } from '../../../contexts/auth-context';
+import { sileo } from 'sileo'
 import * as ApiService from '../../../services/api-service';
 
 function PostTextArea({ setPosts }) {
@@ -12,11 +13,20 @@ function PostTextArea({ setPosts }) {
                 id="floatingTextarea2" 
                 style={{height: "100px"}}
                 onKeyDown={async (e) => {
-                    if (e.key === "Enter") {
-                        e.preventDefault();
-                        const newPost = await ApiService.createPost({ content: e.target.value });
-                        setPosts(prev => ([...prev,{...newPost, user: user, comments: [], likes: []}]).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-                        e.target.value = "";
+                    try {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            const newPost = await ApiService.createPost({ content: e.target.value });
+                            setPosts(prev => ([...prev,{...newPost, user: user, comments: [], likes: []}]).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                            e.target.value = "";
+                        }
+                    } catch (error) {
+                        if (error.response.status) {
+                            sileo.error({
+                                title: "Something went wrong",
+                                description: "Offensive language is not allowed.",
+                            });
+                        }
                     }
                 }}
                 ></textarea>

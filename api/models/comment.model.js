@@ -33,6 +33,12 @@ const commentSchema = new mongoose.Schema(
     },
 );
 
+commentSchema.virtual("likes", {
+    ref: "Like",
+    localField: "_id",
+    foreignField: "targetId",
+});
+
 const Comment = mongoose.model('Comment', commentSchema);
 
 export default Comment;

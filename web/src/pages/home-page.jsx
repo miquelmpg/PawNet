@@ -62,7 +62,6 @@ function HomePage({ toggle, setToggle }) {
 
     return ( 
         <>  
-            {/* <Navbar toggle={toggle} setNumPage={setNumPage}/> */}
             <div className='d-flex gap-5'>
                 <UserList usersList={usersList} search={search} setSearch={setSearch} setUsersList={setUsersList} usersFollow={usersFollow} setToggle={setToggle} filter follows={false}/>
                 <PostList setPosts={setPosts} post={posts} setUsersFollow={setUsersFollow} setToggle={setToggle} usersFollow={usersFollow} profile/>

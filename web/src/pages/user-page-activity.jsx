@@ -40,12 +40,12 @@ function UserPageActivity({ toggle, setToggle}) {
 
     return (
         <>
-            <div className='d-flex justify-content-center'>
-                <div className='w-100' style={{position: 'relative'}}>
+            <div className='d-flex justify-content-center' style={{height: 'auto', minHeight: 'calc(100vh - 76px)'}}>
+                <div className='d-flex align-items-center justify-content-center w-100' style={{position: 'relative'}}>
                     {userPost && userPost.length > 0 && <PostList post={[userPost[index]]} setToggle={setToggle} usersFollow={usersFollow} setPosts={setPosts} profile={false} />}
-                    {user && <div className="fa fa-angle-left" style={{ width: '35px', height: 'auto', position: 'absolute', top: 20, left: 245}} onClick={() => subtractOneToIndexNumber()}></div>}
-                    {user && <div className="fa fa-angle-right " style={{ width: '35px', height: 'auto', position: 'absolute', top: 20, right: 220}} onClick={() => addOneToIndexNumber()}></div>}
-                    {userPost && userPost.length === 0 && <div>This user does not have comments yet.</div>}
+                    {user && !(userPost.length === 0) && <div className="fa fa-angle-left btn btn-outline-light btn-sm mb-2 rounded-pill align-self-center" style={{width: '35px', height: 'auto', position: 'absolute', top: '20px', left: '245px'}} onClick={() => subtractOneToIndexNumber()}></div>}
+                    {user && !(userPost.length === 0) && <div className="fa fa-angle-right btn btn-outline-light btn-sm mb-2 rounded-pill align-self-center" style={{width: '35px', height: 'auto', position: 'absolute', top: '20px', right: '245px', backgroundColor: ''}} onClick={() => addOneToIndexNumber()}></div>}
+                    {userPost && userPost.length === 0 && <div className="text-white rounded-5 d-flex align-items-center justify-content-center fs-5" style={{backgroundColor: '#202020', width: '55vw', height: '15vh'}}>This user does not have comments yet.</div>}
                 </div>
             </div>
         </>

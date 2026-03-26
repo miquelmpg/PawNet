@@ -16,7 +16,14 @@ export async function login(req, res) {
         throw createHttpError(400, "missing email or password");
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate({
+        path: "followers",
+        populate: { path: "follower", select: "userName profilePicture" }
+    })
+    .populate({
+        path: "following",
+        populate: { path: "following", select: "userName profilePicture" }
+    });
 
     if (!user) {
         throw createHttpError(401, "user not found");
@@ -48,7 +55,17 @@ export async function logout(req, res) {
 export async function detail(req, res) {
     const id = req.params.id === "me" ? req.session.user.id : req.params.id;
 
-    let userPromise = User.findById(id).populate("posts").populate('pets');
+    let userPromise = User.findById(id)
+        .populate("posts")
+        .populate('pets')
+        .populate({
+            path: "followers",
+            populate: { path: "follower", select: "userName profilePicture" }
+        })
+        .populate({
+            path: "following",
+            populate: { path: "following", select: "userName profilePicture" }
+        });
 
     const user = await userPromise;
 
@@ -92,7 +109,11 @@ export async function usersList(req, res) {
         };
     }
 
-    const userNames = await User.find(criteria);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 75;
+    const skip = (page - 1) * limit;
+
+    const userNames = await User.find(criteria).skip(skip).limit(limit);
 
     res.json(userNames);
 }

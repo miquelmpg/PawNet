@@ -5,7 +5,7 @@ function PostList({ post, setPosts, usersFollow, setToggle, profile }) {
 
     return (
         <>
-            <div className="container w-50 rounded-5 p-5" style={{backgroundColor: '#e44949'}}>
+            <div className="container d-flex flex-column gap-5 w-50 rounded-5 p-5" style={{backgroundColor: '#e44949'}}>
                 {profile && <PostTextArea setPosts={setPosts} />}
                 {post && post?.map((post) => (
                             <div key={post.id}>

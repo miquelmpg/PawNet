@@ -76,6 +76,18 @@ userSchema.virtual("pets", {
     foreignField: "owner",
 });
 
+userSchema.virtual("following", {
+    ref: "Follow",
+    localField: "_id",
+    foreignField: "follower",
+});
+
+userSchema.virtual("followers", {
+    ref: "Follow",
+    localField: "_id",
+    foreignField: "following",
+});
+
 userSchema.pre('save', async function () {
     if (this.isModified('password')) {
         this.password = await bcrypt.hash(this.password, 10);

@@ -7,7 +7,7 @@ function UserProfile({ id, userName, email, password, bio, firstName, lastName, 
         firstName,
         lastName,
         gender,
-        birthday: DateUtils.dateToString(birthday)[0],
+        birthday: birthday ? DateUtils.dateToString(birthday)[0] : '',
         location,
         userName,
         email,
@@ -52,43 +52,43 @@ function UserProfile({ id, userName, email, password, bio, firstName, lastName, 
             {/* FIRST NAME */}
             <div className="input-group mb-1">
                 <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('firstName', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <input type="text" className={`form-control ${errors.firstName ? 'is-invalid' : ''}`} placeholder="Enter your first name" {...register('firstName', { required: 'User firstName is required' }) }/>
+                {errors.firstName && (<div className="invalid-feedback">{errors.firstName.message}</div> )}
             </div>
 
             {/* LAST NAME */}
             <div className="input-group mb-1">
                 <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('lastName', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <input type="text" className={`form-control ${errors.lastName ? 'is-invalid' : ''}`} placeholder="Enter your last name" {...register('lastName', { required: 'User lastName is required' }) }/>
+                {errors.lastName && (<div className="invalid-feedback">{errors.lastName.message}</div> )}
             </div>
 
             {/* BIO */}
             <div className="input-group mb-1">
-                <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('bio', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <span className="input-group-text"><i className="fa fa-pencil"></i></span>
+                <input type="text" className={`form-control ${errors.bio ? 'is-invalid' : ''}`} placeholder="Enter your bio" {...register('bio', { required: 'User bio is required' }) }/>
+                {errors.bio && (<div className="invalid-feedback">{errors.bio.message}</div> )}
             </div>
 
             {/* LOCATION */}
             <div className="input-group mb-1">
-                <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('location', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <span className="input-group-text"><i className="fa fa-map"></i></span>
+                <input type="text" className={`form-control ${errors.location ? 'is-invalid' : ''}`} placeholder="Enter your location" {...register('location', { required: 'User location is required' }) }/>
+                {errors.location && (<div className="invalid-feedback">{errors.location.message}</div> )}
             </div>
 
             {/* GENDER */}
             <div className="input-group mb-1">
-                <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('gender', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <span className="input-group-text"><i className="fa fa-mercury"></i></span>
+                <input type="text" className={`form-control ${errors.gender ? 'is-invalid' : ''}`} placeholder="Enter your gender" {...register('gender', { required: 'User gender is required' }) }/>
+                {errors.gender && (<div className="invalid-feedback">{errors.gender.message}</div> )}
             </div>
 
             {/* BIRTHDAY */}
             <div className="input-group mb-1">
-                <span className="input-group-text"><i className="fa fa-user fa-fw"></i></span>
-                <input type="text" className={`form-control ${errors.userName ? 'is-invalid' : ''}`} placeholder="Enter your username" {...register('birthday', { required: 'User userName is required' }) }/>
-                {errors.userName && (<div className="invalid-feedback">{errors.userName.message}</div> )}
+                <span className="input-group-text"><i className="fa fa-birthday-cake"></i></span>
+                <input type="text" className={`form-control ${errors.birthday ? 'is-invalid' : ''}`} placeholder="Enter your birthday" {...register('birthday', { required: 'User userName is required' }) }/>
+                {errors.birthday && (<div className="invalid-feedback">{errors.birthday.message}</div> )}
             </div>
 
             <div className="d-grid gap-2 mt-2">

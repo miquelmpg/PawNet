@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../../../contexts/auth-context';
 import * as ApiService from '../../../services/api-service';
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ function Navbar({ toggle, setNumPage }) {
     const [user, setUser] = useState()
     const { user: currentUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     async function handleLogout() {
         await ApiService.logout();
@@ -33,9 +34,13 @@ function Navbar({ toggle, setNumPage }) {
 
     return (
         <>
-            {user && <nav className="navbar navbar-expand-lg sticky-top navbar rounded-5" style={{backgroundColor: '#202020'}}>
+            {location.pathname !== '/register' &&
+                location.pathname !== '/login' && 
+                user && <nav className="navbar navbar-expand-lg sticky-top navbar rounded-5" style={{backgroundColor: '#202020'}}>
                 <div className="container-fluid">
-                    <NavLink className="fw-bold text-white" to={'/'} onClick={() => scrollToTop()}><img className="rounded-5 w-50" src={socialMedia}/></NavLink>
+                    <NavLink className="fw-bold text-white"  to={'/'} onClick={() => scrollToTop()}>
+                        <img className="rounded-5" style={{width: '60px'}} src={socialMedia}/>
+                    </NavLink>
                     <div className="d-flex gap-5 align-items-center">
                         <NavLink to={`/account/${user.id}`}>
                             <img src={user.profilePicture} className='rounded-circle' style={{width: '60px'}} />
@@ -48,7 +53,7 @@ function Navbar({ toggle, setNumPage }) {
                     </div>
                         <ul className="navbar-nav mb-2 mb-lg-0">
                             {user && <div className="d-flex justify-content-around gap-2">
-                                        <li className="nav-item"><button className="btn btn-outline-light rounded-pill" onClick={handleLogout}><i className="fa fa-sign-out"></i></button></li>
+                                        <li className="nav-item"><button className="btn btn-outline-light rounded-pill" style={{height: '60px', width: '60px'}} onClick={handleLogout}><i className="fa fa-sign-out"></i></button></li>
                                     </div>}
                         </ul>
                 </div>

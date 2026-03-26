@@ -1,4 +1,5 @@
 import Post from "../models/post.model.js";
+import User from '../models/user.model.js';
 import createHttpError from "http-errors";
 
 export async function createPost(req, res) {
@@ -33,10 +34,47 @@ export async function postsList(req, res) {
     }
 
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    const postList = await Post.find(criteria).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('comments');
+    const postList = await Post
+        .find(criteria)
+        .sort({ createdAt: -1 })
+        .skip(skip).limit(limit)
+        .populate({ path: 'user', select: 'id userName profilePicture' })
+        .populate({ path: 'comments', populate: [ { path: 'user', select: 'id userName profilePicture' }, { path: 'likes', populate: { path: 'user', select: '_id userName profilePicture' } }]})
+        .populate({ path: 'likes', populate: { path: 'user', select: 'id' } });
+    
+    postList.forEach(post => {
+    post.comments.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    )});
+
+    res.json(postList);
+}
+
+export async function postsListByUser(req, res) {
+    const user = await User.findById(req.params.id);
+
+    if(!user) {
+        throw createHttpError(404, 'User not found');
+    }
+
+    const { id } = req.params
+
+    const criteria = {user: id};
+
+    const postList = await Post
+        .find(criteria)
+        .sort({ createdAt: -1 })
+        .populate({ path: 'user', select: 'id userName profilePicture' })
+        .populate({ path: 'comments', populate: [ { path: 'user', select: 'id userName profilePicture' }, { path: 'likes', populate: { path: 'user', select: '_id userName profilePicture' } }]})
+        .populate({ path: 'likes', populate: { path: 'user', select: 'id' } });
+    
+    postList.forEach(post => {
+    post.comments.sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+    )});
 
     res.json(postList);
 }

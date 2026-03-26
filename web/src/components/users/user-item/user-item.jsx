@@ -18,7 +18,7 @@ function UserItem({ id, userName, profilePicture, usersFollow, setToggle }) {
                 <div>{userName}</div>
             </Link>
             <div style={{position: 'absolute'}}>
-                <div style={{position: 'absolute', bottom: 10, right: 20}} onClick={() => newFollow(id)}>
+                <div style={{position: 'absolute', bottom: 10, right: 20, cursor: 'pointer'}} onClick={() => newFollow(id)}>
                     <i className={usersFollow
                                     .map((follow) => follow.id)
                                     .includes(id) ? 'fa fa-minus' : 'fa fa-plus'}>

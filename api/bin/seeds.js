@@ -9,12 +9,12 @@ import Comment from '../models/comment.model.js';
 import Follow from '../models/follow.model.js';
 import Like from '../models/like.model.js';
 
-const NUM_USERS = 1000;
-const NUM_PETS = 1000;
+const NUM_USERS = 200;
+const NUM_PETS = 150;
 const NUM_POSTS = 50;
 const NUM_COMMENTS = 50;
-const NUM_FOLLOWS = 1000;
-const NUM_LIKES = 1000;
+const NUM_FOLLOWS = 50;
+const NUM_LIKES = 50;
 
 function generateUser() {
     return {
@@ -46,6 +46,7 @@ function generatePost(usersArray) {
     return {
         content: faker.lorem.sentences(faker.number.int({ min: 5, max: 20 })),
         user: faker.helpers.arrayElement(usersArray)._id,
+        createdAt: faker.date.past(),
     };
 }
 
@@ -54,6 +55,7 @@ function generateComment(postsArray, usersArray) {
         content: faker.lorem.sentences(faker.number.int({ min: 1, max: 3 })),
         post: faker.helpers.arrayElement(postsArray)._id,
         user: faker.helpers.arrayElement(usersArray)._id,
+        createdAt: faker.date.past(),
     };
 }
 
