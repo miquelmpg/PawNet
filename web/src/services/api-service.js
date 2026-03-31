@@ -2,9 +2,9 @@ import axios from "axios";
 
 const http = axios.create({
     baseURL:
-        location.host === "PawNet.netlify.app"
-        ? "https://api-ancient-paper-8537.fly.dev/api"
-        : "http://localhost:3000/api",
+        window.location.hostname === "localhost"
+        ? "http://localhost:3000/api"
+        : "https://social-net-work.fly.dev/api",
     withCredentials: true,
 });
 
