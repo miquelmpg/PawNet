@@ -3,14 +3,12 @@ import "../config/db.config.js";
 import { faker } from "@faker-js/faker";
 
 import User from '../models/user.model.js';
-import Pet from '../models/pet.model.js';
 import Post from '../models/post.model.js';
 import Comment from '../models/comment.model.js';
 import Follow from '../models/follow.model.js';
 import Like from '../models/like.model.js';
 
 const NUM_USERS = 200;
-const NUM_PETS = 150;
 const NUM_POSTS = 50;
 const NUM_COMMENTS = 50;
 const NUM_FOLLOWS = 50;
@@ -27,18 +25,6 @@ function generateUser() {
         location: faker.location.city(),
         birthday: faker.date.birthdate({ min: 16, max: 80, mode: 'age' }),
         gender: faker.helpers.arrayElement(['male', 'female', 'other']),
-    };
-}
-
-function generatePet(usersArray) {
-    const species = faker.helpers.arrayElement(['cat', 'dog']);
-    return {
-        name: faker.animal[species](),
-        species,
-        bio: faker.lorem.sentence(),
-        weight: faker.number.float({ min: 1, max: 50, precision: 0.1 }),
-        birthday: faker.date.past(15),
-        owner: faker.helpers.arrayElement(usersArray)._id,
     };
 }
 
@@ -84,13 +70,6 @@ async function seed() {
     const usersData = Array.from({ length: NUM_USERS }, generateUser);
     const users = await User.insertMany(usersData);
     console.log("First user:", users[0]);
-
-    console.log("seeding pets...");
-    const petsData = Array.from({ length: NUM_PETS }, () => generatePet(users));
-    console.log("First pet:", petsData[0]);
-
-    await Pet.insertMany(petsData);
-    console.log("seeding pets... [OK]");
 
     console.log("seeding posts...");
     const postsData = Array.from({ length: NUM_POSTS }, () => generatePost(users));

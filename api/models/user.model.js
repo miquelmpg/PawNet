@@ -70,12 +70,6 @@ userSchema.virtual("posts", {
     foreignField: "user",
 });
 
-userSchema.virtual("pets", {
-    ref: "Pet",
-    localField: "_id",
-    foreignField: "owner",
-});
-
 userSchema.virtual("following", {
     ref: "Follow",
     localField: "_id",

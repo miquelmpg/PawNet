@@ -12,9 +12,6 @@ import { cors } from "./middlewares/cors.middleware.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-
-
 app.use(morgan("dev"));
 app.use(express.static(`./web/build`));
 app.use(cors);
@@ -25,11 +22,5 @@ app.use(checkAuth);
 app.use("/api", router);
 
 app.use(errorHandler);
-
-if (process.env.NODE_ENV !== "test") {
-    app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-    });
-}
 
 export default app;

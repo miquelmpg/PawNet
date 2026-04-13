@@ -4,8 +4,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "node --env-file .env --watch app.js",
-    "start": "node --env-file .env app.js",
+    "dev": "node --env-file .env --watch server.js",
+    "start": "node --env-file .env server.js",
     "seed": "node --env-file .env bin/seeds.js",
     "test": "cross-env NODE_ENV=test vitest run",
     "test:coverage": "cross-env NODE_ENV=test vitest run --coverage"
@@ -17,11 +17,11 @@
   "dependencies": {
     "bad-words": "^3.0.4",
     "bcrypt": "^6.0.0",
-    "cloudinary": "^1.41.3",
     "express": "^5.2.1",
     "http-errors": "^2.0.1",
     "mongoose": "^9.2.2",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",

@@ -1,4 +1,3 @@
-import "../models/pet.model.js";
 import User from "../models/user.model.js";
 import Session from "../models/session.model.js";
 import createHttpError from "http-errors";
@@ -57,7 +56,6 @@ export async function detail(req, res) {
 
     let userPromise = User.findById(id)
         .populate("posts")
-        .populate('pets')
         .populate({
             path: "followers",
             populate: { path: "follower", select: "userName profilePicture" }
