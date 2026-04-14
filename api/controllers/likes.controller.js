@@ -29,9 +29,19 @@ export async function toggle(req, res) {
             user: req.session.user.id,
             targetId: req.params.targetId,
         });
+        
+        const io = req.app.get("io");
+
+        io.emit("like:created", {postId: newLike.targetId, like: newLike.user});
+        
         res.status(201).json(newLike);
     } else {
         await Like.findByIdAndDelete(like.id);
+
+        const io = req.app.get("io");
+
+        io.emit("like:deleted", {postId: like.targetId, like: like.user});
+
         res.status(204).end();
     }
 }

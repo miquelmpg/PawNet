@@ -8,6 +8,12 @@ export async function createComment(req, res) {
         post: req.params.id,
     });
 
+    await comment.populate([ { path: "user", select: "id userName profilePicture", }, { path: "likes", populate: { path: "user", select: "id" } } ]);
+
+    const io = req.app.get("io");
+
+    io.emit("comment:created", comment);
+
     res.status(201).json(comment);
 }
 
@@ -26,6 +32,10 @@ export async function deleteComment(req, res) {
     }
 
     await Comment.findByIdAndDelete(comment.id);
+
+    const io = req.app.get("io");
+
+    io.emit("comment:deleted", {postId: comment.post, commentId: comment.id});
 
     res.status(204).end();
 }

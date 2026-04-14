@@ -12,7 +12,7 @@ const io = new Server(server, {
             "http://localhost:5173",
             "https://social-net-work.fly.dev"
         ],
-        methods: ["GET", "POST"]
+        credentials: true
     }
 });
 

@@ -2,7 +2,8 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../../../contexts/auth-context';
 import * as ApiService from '../../../services/api-service';
 import { useEffect, useState } from "react";
-import socialMedia from '../../../assets/icons/socialNetwork.png'
+import socialMedia from '../../../assets/icons/socialNetwork.png';
+import socket from "../../../services/socket";
 
 function Navbar({ toggle, setNumPage }) {
     const [user, setUser] = useState()
@@ -19,6 +20,16 @@ function Navbar({ toggle, setNumPage }) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         setNumPage(1);
     };
+
+    useEffect(() => {
+        socket.on("follow:created", (post) => {
+            setUser((prev) => [post, ...prev]);
+        });
+
+        return () => {
+            socket.off("follow:created");
+        };
+    }, []);
 
     useEffect(() => {
         if (!currentUser) return;

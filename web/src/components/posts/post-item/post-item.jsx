@@ -4,6 +4,7 @@ import { useAuth } from '../../../contexts/auth-context';
 import { sileo } from 'sileo';
 import * as ApiService from '../../../services/api-service';
 import * as DateUtils from '../../../utils/date-utils';
+import socket from '../../../services/socket';
 
 function PostItem({ id, user, likes, content, createdAt, setPosts, setToggle, usersFollow}) {
     const [opacity, setOpacity] = useState(0);
@@ -35,6 +36,18 @@ function PostItem({ id, user, likes, content, createdAt, setPosts, setToggle, us
     }
 
     useEffect(() => {
+        const handleDelete = (id) => {
+            setPosts((prev) => prev.filter(p => p.id !== id));
+        };
+
+        socket.on("post:deleted", handleDelete);
+
+        return () => {
+            socket.off("post:deleted", handleDelete);
+        };
+    }, []);
+
+    useEffect(() => {
         const timer = setTimeout(() => {
             setOpacity(1);
         }, 200);
@@ -64,7 +77,7 @@ function PostItem({ id, user, likes, content, createdAt, setPosts, setToggle, us
                     </i>
                 </div>
                 <div style={{position: 'absolute', bottom: 15, left: 20}} onClick={()=> addLike(id)}>
-                    <i className='fa fa-thumbs-up' style={{color : likes?.map(like => like?.user?.id).includes(currentUser?.id) ? 'red' : '', cursor: 'pointer'}}></i>
+                    <i className='fa fa-thumbs-up' style={{color : (likes?.map(like => like?.user?.id).includes(currentUser.id) || likes?.includes(currentUser.id)) ? 'red' : '', cursor: 'pointer'}}></i>
                 </div>
                 <div style={{position: 'absolute', bottom: 15, left: 50}}>{likes?.length}</div>
             </div>

@@ -8,11 +8,11 @@ export async function createPost(req, res) {
     user: req.session.user.id,
     });
 
-    await post.populate({ path: 'user', select: 'id userName profilePicture' });
+    await post.populate([ { path: "user", select: "id userName profilePicture", }, { path: "likes", populate: { path: "user", select: "id" } } ]);
 
     const io = req.app.get("io");
 
-    io.emit("new-post", post);
+    io.emit("post:created", post);
 
     res.status(201).json(post);
 }
@@ -98,9 +98,9 @@ export async function deletePost(req, res) {
 
     await Post.findByIdAndDelete(post.id);
 
-    // const io = req.app.get("io");
+    const io = req.app.get("io");
 
-    // io.emit("new-post", req.params.id);
+    io.emit("post:deleted", post.id);
 
     res.status(204).end();
 }

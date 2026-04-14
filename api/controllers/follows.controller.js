@@ -23,9 +23,18 @@ export async function toggle(req, res) {
             follower: req.session.user.id,
             following: req.params.id,
         });
+        const io = req.app.get("io");
+
+        io.emit("follow:created", {follower: newFollow.follower, following: newFollow.following});
+
         res.status(201).json(newFollow);
     } else {
         await Follow.findByIdAndDelete(follow.id);
+
+        const io = req.app.get("io");
+
+        io.emit("follow:deleted", {follower: follow.follower, following: follow.following});
+
         res.status(204).end();
     }
 }
