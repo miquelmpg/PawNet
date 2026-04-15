@@ -10,8 +10,6 @@ function CommentItem({ id, user, likes, content, createdAt, post, setPosts, user
     const [opacity, setOpacity] = useState(0);
     const { user: currentUser } = useAuth();
 
-    console.log(likes)
-
     async function deleteComment(postId, commentId) {
         try {
             await ApiService.deleteComment(postId, commentId);
@@ -68,7 +66,7 @@ function CommentItem({ id, user, likes, content, createdAt, post, setPosts, user
                 </div>
             </div>
             <div style={{position: 'absolute', bottom: 15, left: 20}} onClick={()=> addLike(id)}>
-                <i className='fa fa-thumbs-up' style={{color : (likes?.map(like => like?.user?.id).includes(currentUser.id) || likes?.includes(currentUser.id)) ? 'red' : '', cursor: 'pointer'}}></i>
+                <i className='fa fa-thumbs-up' style={{color : likes?.map(like => like?.user?.id).includes(currentUser.id) ? 'red' : '', cursor: 'pointer'}}></i>
             </div>
             <div style={{position: 'absolute', bottom: 15, left: 50}}>{likes?.length}</div>
         </div>

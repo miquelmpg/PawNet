@@ -17,11 +17,11 @@ export async function login(req, res) {
 
     const user = await User.findOne({ email }).populate({
         path: "followers",
-        populate: { path: "follower", select: "userName profilePicture" }
+        populate: { path: "follower", select: "id userName profilePicture" }
     })
     .populate({
         path: "following",
-        populate: { path: "following", select: "userName profilePicture" }
+        populate: { path: "following", select: "id userName profilePicture" }
     });
 
     if (!user) {

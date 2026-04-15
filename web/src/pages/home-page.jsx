@@ -54,7 +54,7 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
 
     useEffect(() => {
         const handleCreate = ({ postId, like }) => {
-            setPosts(prev => prev.map(post => post.id === postId ? {...post, likes: [...post.likes, like]} : post));
+            setPosts(prev => prev.map(post => post.id === postId ? {...post, likes: [...post.likes, {user: {id: like}}]} : post));
         };
 
         socket.on("like:created", handleCreate);
@@ -66,7 +66,7 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
 
     useEffect(() => {
         const handleCreate = ({ postId, like }) => {
-            setPosts(prev => prev.map(post => ({ ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: [...comment.likes, like] } : comment) })));
+            setPosts(prev => prev.map(post => ({ ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: [...comment.likes, {user: {id: like}}] } : comment) })));
         };
 
         socket.on("like:created", handleCreate);
@@ -78,7 +78,7 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
 
     useEffect(() => {
         const handleCreate = ({ postId, like }) => {
-            setPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likes.filter(likeItem => likeItem.id !== like.id) } : post));
+            setPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likes.filter(likeItem => likeItem.user.id !== like) } : post));
         };
 
         socket.on("like:deleted", handleCreate);
@@ -90,7 +90,7 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
 
     useEffect(() => {
         const handleCreate = ({ postId, like }) => {
-            setPosts(prev => prev.map(post => post.id !== postId ? { ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: comment.likes.filter(l => l.id !== like.id) } : comment) } : post));
+            setPosts(prev => prev.map(post => post.id !== postId ? { ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: comment.likes.filter(l => l.user.id !== like) } : comment) } : post));
         };
 
         socket.on("like:deleted", handleCreate);
