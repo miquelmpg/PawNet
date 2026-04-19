@@ -36,6 +36,18 @@ function CommentItem({ id, user, likes, content, createdAt, post, setPosts, user
     }
 
     useEffect(() => {
+        const handleDelete = ({ postId, commentId} ) => {
+            setPosts(prev => prev.map(post => post.id === postId ? { ...post, comments: (post.comments ?? []).filter(comment => comment.id != commentId) } : post));
+        };
+
+        socket.on("comment:deleted", handleDelete);
+
+        return () => {
+            socket.off("comment:deleted", handleDelete);
+        };
+    }, []);
+
+    useEffect(() => {
         const timer = setTimeout(() => {
             setOpacity(1);
         }, 200);

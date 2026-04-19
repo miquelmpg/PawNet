@@ -25,3 +25,9 @@ if (process.env.NODE_ENV !== "test") {
         console.log(`Server running on http://localhost:${PORT}`);
     });
 }
+
+// if (process.env.NODE_ENV !== "test") {
+//     server.listen(PORT, "0.0.0.0", () => {
+//         console.log(`Server running on port ${PORT}`);
+//     });
+// }

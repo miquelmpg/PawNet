@@ -66,7 +66,7 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
 
     useEffect(() => {
         const handleCreate = ({ postId, like }) => {
-            setPosts(prev => prev.map(post => ({ ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: [...comment.likes, {user: {id: like}}] } : comment) })));
+            setPosts(prev => prev.map(post => ({ ...post, comments: (post.comments ?? []).map(comment => comment.id === postId ? { ...comment, likes: [...(comment.likes ?? []), { user: { id: like } }] } : comment) })));
         };
 
         socket.on("like:created", handleCreate);
