@@ -1,26 +1,16 @@
 import { Routes, Route } from 'react-router';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Navbar } from './components/ui';
 import { HomePage, UserPageActivity, RegisterPage, LoginPage, UserAccount } from './pages';
 import { Toaster } from 'sileo';
 import socialLogo from './assets/icons/socialNetwork-logo.png';
-import socket from "./services/socket";
+import { useSocket } from './hooks/use-socket';
 
 function App() {
   const [toggle, setToggle] = useState(false);
   const [numPage, setNumPage] = useState(1);
 
-  useEffect(() => {
-    const handleConnect = () => {
-      console.log("conectado al backend:", socket.id);
-    };
-
-    socket.on("connect", handleConnect);
-
-    return () => {
-      socket.off("connect", handleConnect);
-    };
-  }, []);
+  useSocket();
   
   return (
     <div className='d-flex flex-column gap-3 p-3' style={{backgroundColor: '#CFCFCF', backgroundImage: `url(${socialLogo})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundAttachment: 'fixed'}}>

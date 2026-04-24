@@ -1,6 +1,6 @@
 export default function socketHandler(io) {
     io.on("connection", (socket) => {
-        console.log(`🔌 Conectado: ${socket.id}`);
+        console.log(`🔌 Connected: ${socket.id}`);
 
         handleMessages(socket, io);
         handleDisconnect(socket);
@@ -8,13 +8,13 @@ export default function socketHandler(io) {
     }
 
     function handleMessages(socket, io) {
-    socket.on("mensaje", (data) => {
-        io.emit("nuevo-mensaje", data);
-    });
+        socket.on("message", (data) => {
+            io.emit("new-message", data);
+        });
     }
 
     function handleDisconnect(socket) {
-    socket.on("disconnect", () => {
-        console.log(`❌ Desconectado: ${socket.id}`);
+        socket.on("disconnect", () => {
+            console.log(`❌ Disconnected: ${socket.id}`);
     });
 }

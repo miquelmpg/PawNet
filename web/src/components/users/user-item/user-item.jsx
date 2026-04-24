@@ -1,7 +1,9 @@
+import { useState, useEffect} from 'react';
 import { Link } from "react-router-dom";
 import { useAuth } from '../../../contexts/auth-context';
 import { sileo } from 'sileo';
 import * as ApiService from '../../../services/api-service';
+import socket from "../../../services/socket";
 
 function UserItem({ id, userName, profilePicture, usersFollow, setToggle }) {
     const { user: currentUser, setUser: setCurrentUser } = useAuth();
@@ -33,6 +35,9 @@ function UserItem({ id, userName, profilePicture, usersFollow, setToggle }) {
                                     .map((follow) => follow.id)
                                     .includes(id) ? 'fa fa-minus' : 'fa fa-plus'}>
                     </i>
+                </div>
+                <div style={{position: 'absolute', top: -20, left: 40}} onClick={() => newFollow(id)}>
+                    <i className='fa fa-circle' style={{color: currentUser.id === id ? "green" : "red"}}></i>
                 </div>
             </div>
         </div>

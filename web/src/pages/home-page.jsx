@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { UserList } from '../components/users';
 import { PostList } from '../components/posts';
 import { Footer, PaginationArrows } from '../components/ui';
@@ -9,16 +9,15 @@ import socket from '../services/socket';
 function HomePage({ toggle, setToggle, numPage, setNumPage }) {
     const [posts, setPosts] = useState([]);
     const [usersList, setUsersList] = useState([]);
+    const [usersListFollow, setUsersListFollow] = useState([]);
     const [usersFollow, setUsersFollow] = useState([]);
     const [search, setSearch] = useState('');
     const { user } = useAuth();
 
-    console.log(user)
-
     useEffect(() => {
         async function getFollowing() {
             const updatedFollowing = await ApiService.getProfile(user.id);
-            setUsersFollow(user.following.map((follow) => follow.following));
+            setUsersFollow(updatedFollowing.following.map((follow) => follow.following));
         }
         getFollowing();
     }, [toggle]);
@@ -33,72 +32,78 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
     }, [numPage]);
 
     useEffect(() => {
-        socket.on("post:created", (post) => {
-            setPosts((prev) => [post, ...prev]);
-        });
+        const handleCreatePost = (post) => {
+            setPosts((prev) => {
+                if (prev.some(p => p.id === post.id)) return prev;
+                return [post, ...prev];
+            });
+        };
+
+        socket.on("post:created", handleCreatePost);
+        socket.on(`user:${user.id}`, handleCreatePost);
 
         return () => {
-            socket.off("post:created");
+            socket.off("post:created", handleCreatePost);
         };
     }, []);
 
     useEffect(() => {
-        const handleComment = (comment) => {
+        const handleCreateComment = (comment) => {
             setPosts(prev => prev.map(post => post.id === comment.post ? { ...post, comments: [...(post.comments || []), comment].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)) } : post));
         };
 
-        socket.on("comment:created", handleComment);
+        socket.on("comment:created", handleCreateComment);
 
         return () => {
-            socket.off("comment:created", handleComment);
+            socket.off("comment:created", handleCreateComment);
         };
     }, []);
 
     useEffect(() => {
-        const handleCreate = ({ postId, like }) => {
+        const handleCreateLikePost = ({ postId, like }) => {
             setPosts(prev => prev.map(post => post.id === postId ? {...post, likes: [...post.likes, {user: {id: like}}]} : post));
         };
 
-        socket.on("like:created", handleCreate);
+        socket.on("like:created", handleCreateLikePost);
 
         return () => {
-            socket.off("like:created", handleCreate);
+            socket.off("like:created", handleCreateLikePost);
         };
     }, []);
 
     useEffect(() => {
-        const handleCreate = ({ postId, like }) => {
+        const handleCreateLikeComment = ({ postId, like }) => {
             setPosts(prev => prev.map(post => ({ ...post, comments: (post.comments ?? []).map(comment => comment.id === postId ? { ...comment, likes: [...(comment.likes ?? []), { user: { id: like } }] } : comment) })));
         };
 
-        socket.on("like:created", handleCreate);
+        socket.on("like:created", handleCreateLikeComment);
 
         return () => {
-            socket.off("like:created", handleCreate);
+            socket.off("like:created", handleCreateLikeComment);
         };
     }, []);
 
     useEffect(() => {
-        const handleCreate = ({ postId, like }) => {
+        const handleDeleteLikePost = ({ postId, like }) => {
             setPosts(prev => prev.map(post => post.id === postId ? { ...post, likes: post.likes.filter(likeItem => likeItem.user.id !== like) } : post));
         };
 
-        socket.on("like:deleted", handleCreate);
+        socket.on("like:deleted", handleDeleteLikePost);
 
         return () => {
-            socket.off("like:deleted", handleCreate);
+            socket.off("like:deleted", handleDeleteLikePost);
         };
     }, []);
 
     useEffect(() => {
-        const handleCreate = ({ postId, like }) => {
+        const handleDeleteLikeComment = ({ postId, like }) => {
             setPosts(prev => prev.map(post => post.id !== postId ? { ...post, comments: post.comments.map(comment => comment.id === postId ? { ...comment, likes: comment.likes.filter(l => l.user.id !== like) } : comment) } : post));
         };
 
-        socket.on("like:deleted", handleCreate);
+        socket.on("like:deleted", handleDeleteLikeComment);
 
         return () => {
-            socket.off("like:deleted", handleCreate);
+            socket.off("like:deleted", handleDeleteLikeComment);
         };
     }, []);
 
@@ -114,6 +119,12 @@ function HomePage({ toggle, setToggle, numPage, setNumPage }) {
             clearTimeout(timeout);
         };
     }, [search, usersFollow]);
+
+    // setUsersList(
+    //     users.filter(user => 
+    //         usersFollow.some(f => f.id === user.id)
+    //     )
+    // )
 
     return ( 
         <>  

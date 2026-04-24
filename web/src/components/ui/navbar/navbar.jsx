@@ -22,44 +22,57 @@ function Navbar({ toggle, setNumPage }) {
     };
 
     useEffect(() => {
-        socket.on("follow:created", ({ following }) => {
-            setCurrentUser(prev => ({ ...prev, following: [...prev.following, { following: {id: following} }] }));
-        });
+        const handleCreateFollowing = ({ following }) => {
+            setCurrentUser(prev => ({
+            ...prev,
+            following: [...prev.following, { id: following }]
+            }));
+        };
+
+        const handleDeleteFollowing = ({ following }) => {
+            setCurrentUser(prev => ({
+            ...prev,
+            following: prev.following.filter(item => item.id !== following)
+            }));
+        };
+
+        socket.on("follow:created", handleCreateFollowing);
+        socket.on("follow:deleted", handleDeleteFollowing);
 
         return () => {
-            socket.off("follow:created");
+            socket.off("follow:created", handleCreateFollowing);
+            socket.off("follow:deleted", handleDeleteFollowing);
         };
     }, []);
 
     useEffect(() => {
-        socket.on("follow:deleted", ({ following }) => {
-            setCurrentUser(prev => ({ ...prev, following: prev.following.filter(item => item.following.id !== following) }));
-        });
+        const handleCreateFollower = ({ follower }) => {
+            setCurrentUser(prev => ({
+            ...prev,
+            followers: [
+                ...prev.followers,
+                { follower: { id: follower } }
+            ]
+            }));
+        };
+
+        const handleDeleteFollower = ({ follower }) => {
+            setCurrentUser(prev => ({
+            ...prev,
+            followers: prev.followers.filter(
+                item => item.follower.id !== follower
+            )
+            }));
+        };
+
+        socket.on("follow:created", handleCreateFollower);
+        socket.on("follow:deleted", handleDeleteFollower);
 
         return () => {
-            socket.off("follow:deleted");
+            socket.off("follow:created", handleCreateFollower);
+            socket.off("follow:deleted", handleDeleteFollower);
         };
     }, []);
-
-    // useEffect(() => {
-    //     socket.on("follow:created", ({ follower }) => {
-    //         setCurrentUser(prev => ({ ...prev, followers: [...prev.followers, { follower: {id: follower} }] }));
-    //     });
-
-    //     return () => {
-    //         socket.off("follow:created");
-    //     };
-    // }, []);
-
-    // useEffect(() => {
-    //     socket.on("follow:deleted", ({ follower }) => {
-    //         setCurrentUser(prev => ({ ...prev, followers: prev.followers.filter(item => item.follower.id !== follower) }));
-    //     });
-
-    //     return () => {
-    //         socket.off("follow:deleted");
-    //     };
-    // }, []);
 
     useEffect(() => {
         if (!currentUser) return;

@@ -39,35 +39,3 @@ export async function toggle(req, res) {
         res.status(204).end();
     }
 }
-
-export async function getFollowerList(req, res) {
-    const user = await User.findById(req.params.id);
-    
-    if(!user) {
-        throw createHttpError(404, 'Recourse not found');
-    }
-
-    const followerList = await Follow.find({ following: req.params.id }).populate('follower');
-    res.json(followerList);
-}
-
-export async function getFollowersNumber(req, res) {
-    const user = await User.findById(req.params.id);
-    
-    if(!user) {
-        throw createHttpError(404, 'Recourse not found');
-    }
-    const followers = await Follow.countDocuments({ following: req.params.id });
-    res.json(followers);
-}
-
-export async function getFollowingsNumber(req, res) {
-    const user = await User.findById(req.params.id);
-    
-    if(!user) {
-        throw createHttpError(404, 'Recourse not found');
-    }
-    
-    const following = await Follow.countDocuments({ follower: req.params.id });
-    res.json(following);
-}
