@@ -6,7 +6,9 @@ import * as ApiService from '../../../services/api-service';
 import socket from "../../../services/socket";
 
 function UserItem({ id, userName, profilePicture, usersFollow, setToggle }) {
-    const { user: currentUser, setUser: setCurrentUser } = useAuth();
+    const { user: currentUser, setUser: setCurrentUser, online } = useAuth();
+
+    console.log(online[currentUser.id])
 
     async function newFollow(id) {
         try {
@@ -37,7 +39,7 @@ function UserItem({ id, userName, profilePicture, usersFollow, setToggle }) {
                     </i>
                 </div>
                 <div style={{position: 'absolute', top: -20, left: 40}} onClick={() => newFollow(id)}>
-                    <i className='fa fa-circle' style={{color: currentUser.id === id ? "green" : "red"}}></i>
+                    <i className='fa fa-circle' style={{color: online[id] ? "green" : "red"}}></i>
                 </div>
             </div>
         </div>

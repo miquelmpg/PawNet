@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import socket from '../services/socket';
 import * as ApiService from '../services/api-service';
 
 const AuthContext = createContext({});
@@ -7,6 +8,7 @@ const AuthContext = createContext({});
 export function AuthContextProvider({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
+    const [online, setOnline] = useState([]);
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -20,6 +22,28 @@ export function AuthContextProvider({ children }) {
         }
         userFetch();
     }, []);
+
+        useEffect(() => {
+        const userId = user?.id;
+
+        socket.emit("user:online", userId);
+
+        socket.on("presence:init", (users) => {
+            setOnline(users);
+        });
+
+        socket.on("presence:update", ({ userId, status }) => {
+            setOnline((prev) => ({
+                ...prev,
+                [userId]: status === "online"
+            }));
+        });
+
+        return () => {
+            socket.off("presence:update");
+            socket.off("presence:init");
+        };
+    }, [user?.id]);
 
     async function userLogin(email, password) {
         const user = await ApiService.login(email, password);
@@ -40,7 +64,7 @@ export function AuthContextProvider({ children }) {
     }
 
     return (
-        <AuthContext.Provider value={{ user, userLogin, userLogout, setUser }}>
+        <AuthContext.Provider value={{ user, userLogin, userLogout, setUser, online }}>
             {children}
         </AuthContext.Provider>
     );
